@@ -11,6 +11,10 @@ add_executable(AttackGraph
         src/Node.cpp
         src/Edge.cpp
         src/Graph.cpp
+        src/Dijkstra.cpp
+        include/Dijkstra.h
+        src/MinCut.cpp
+        include/MinCut.h
 )
 
 target_include_directories(AttackGraph PRIVATE
