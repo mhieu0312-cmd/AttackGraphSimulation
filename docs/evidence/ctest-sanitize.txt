@@ -1,0 +1,76 @@
+Test project /workspace/scratch/b4a55936a706/build-sanitize
+    Start 1: graph
+1/9 Test #1: graph ............................***Failed    0.02 sec
+==132==Can't open /proc/131/task for reading.
+==131==LeakSanitizer has encountered a fatal error.
+==131==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==131==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+    Start 2: loader
+2/9 Test #2: loader ...........................***Failed    0.02 sec
+==134==Can't open /proc/133/task for reading.
+==133==LeakSanitizer has encountered a fatal error.
+==133==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==133==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+    Start 3: attack
+3/9 Test #3: attack ...........................***Failed    0.02 sec
+==136==Can't open /proc/135/task for reading.
+==135==LeakSanitizer has encountered a fatal error.
+==135==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==135==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+    Start 4: defender
+4/9 Test #4: defender .........................***Failed    0.01 sec
+==138==Can't open /proc/137/task for reading.
+==137==LeakSanitizer has encountered a fatal error.
+==137==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==137==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+    Start 5: integration
+5/9 Test #5: integration ......................***Failed    0.02 sec
+==140==Can't open /proc/139/task for reading.
+==139==LeakSanitizer has encountered a fatal error.
+==139==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==139==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+    Start 6: regression
+6/9 Test #6: regression .......................***Failed    0.13 sec
+==142==Can't open /proc/141/task for reading.
+==141==LeakSanitizer has encountered a fatal error.
+==141==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==141==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+    Start 7: cli_demo
+7/9 Test #7: cli_demo .........................***Failed  Required regular expression not found. Regex=[NO_PATH: khong con duong di
+]  0.01 sec
+==144==Can't open /proc/143/task for reading.
+==143==LeakSanitizer has encountered a fatal error.
+==143==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==143==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+    Start 8: cli_manual_budget
+8/9 Test #8: cli_manual_budget ................***Failed  Required regular expression not found. Regex=[OVER_BUDGET: van co duong
+]  0.01 sec
+==146==Can't open /proc/145/task for reading.
+==145==LeakSanitizer has encountered a fatal error.
+==145==HINT: For debugging, try setting environment variable LSAN_OPTIONS=verbosity=1:log_threads=1
+==145==HINT: LeakSanitizer does not work under ptrace (strace, gdb, etc)
+
+    Start 9: cli_missing_dataset
+9/9 Test #9: cli_missing_dataset ..............   Passed    0.01 sec
+
+11% tests passed, 8 tests failed out of 9
+
+Total Test time (real) =   0.25 sec
+
+The following tests FAILED:
+	  1 - graph (Failed)
+	  2 - loader (Failed)
+	  3 - attack (Failed)
+	  4 - defender (Failed)
+	  5 - integration (Failed)
+	  6 - regression (Failed)
+	  7 - cli_demo (Failed)
+	  8 - cli_manual_budget (Failed)
+Errors while running CTest
