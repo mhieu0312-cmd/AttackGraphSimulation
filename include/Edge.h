@@ -1,25 +1,75 @@
 #pragma once
+
 #include <optional>
 #include <string>
 
+using namespace std;
+
 class Graph;
+
+
+// =========================
+// EDGE
+// =========================
+
 class Edge {
-    int from, to, weight;
-    std::string relation;
+
+private:
+
+    // Node bat dau va ket thuc
+    int from;
+    int to;
+
+    // Chi phi hacker di qua edge
+    int weight;
+
+    // Loai quan he
+    string relation;
+
+    // Edge da bi Defender chan hay chua
     bool blocked;
+
+    // ID cua edge
     int id;
-    // nullopt: chua co chinh sach chi phi phong thu. Khong lay weight thay the.
-    std::optional<int> capacity;
+
+    // Gia tri dung cho Min-Cut
+    // Co the chua co capacity
+    optional<int> capacity;
+
+    // Cho phep Graph truy cap truc tiep
     friend class Graph;
+
+
 public:
-    Edge(int from, int to, int weight, std::string relation, bool blocked,
-         int id = -1, std::optional<int> capacity = std::nullopt);
+
+    // Constructor
+    Edge(
+        int from,
+        int to,
+        int weight,
+        string relation,
+        bool blocked,
+        int id = -1,
+        optional<int> capacity = nullopt
+    );
+
+
+    // Getter
     int getID() const;
+
     int getFrom() const;
+
     int getTo() const;
+
     int getWeight() const;
-    std::string getRelation() const;
+
+    string getRelation() const;
+
     bool isBlocked() const;
-    std::optional<int> getCapacity() const;
+
+    optional<int> getCapacity() const;
+
+
+    // Thay doi trang thai blocked
     void setBlocked(bool value);
 };

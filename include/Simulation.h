@@ -1,14 +1,47 @@
 #pragma once
+
 #include "Defender.h"
 #include "Dijkstra.h"
 
+#include <cstdint>
+#include <optional>
+#include <string>
+#include <vector>
+
+using namespace std;
+
+
+// =========================
+// KET QUA MO PHONG
+// =========================
+
 struct SimulationResult {
-    AttackResult before, after;
-    bool reachableBefore = false, reachableAfter = false;
-    std::vector<int> patchedEdgeIds;
-    std::string defenseMessage;
+
+    // Ket qua hacker truoc va sau khi phong thu
+    AttackResult before;
+    AttackResult after;
+
+    // Trang thai ket noi S -> T
+    bool reachableBefore = false;
+    bool reachableAfter = false;
+
+    // Danh sach edge da bi Defender block
+    vector<int> patchedEdgeIds;
+
+    // Thong bao ket qua phong thu
+    string defenseMessage;
 };
-// Khong co Max-Flow/Min-Cut: tu dong dung suggestCutEdge cua prototype P3.
-// manualPatch chi dung khi nguoi goi chu dong truyen danh sach ID.
-SimulationResult runSimulation(Graph& graph, int source, int target, std::int64_t budget,
-    std::optional<std::vector<int>> manualPatch = std::nullopt);
+
+
+// =========================
+// CHAY MO PHONG
+// =========================
+
+// Chay Attack -> Defense -> Attack lai
+SimulationResult runSimulation(
+    Graph& graph,
+    int source,
+    int target,
+    int64_t budget,
+    optional<vector<int>> manualPatch = nullopt
+);

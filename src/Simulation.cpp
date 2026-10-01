@@ -1,28 +1,129 @@
 #include "Simulation.h"
 
-SimulationResult runSimulation(Graph& graph, int source, int target, std::int64_t budget,
-                                std::optional<std::vector<int>> manualPatch) {
+using namespace std;
+
+
+// =========================
+// CHAY MO PHONG
+// =========================
+
+SimulationResult runSimulation(
+    Graph& graph,
+    int source,
+    int target,
+    int64_t budget,
+    optional<vector<int>> manualPatch
+) {
+
     SimulationResult result;
+
     Defender defender(graph);
-    result.before = hackerSimulation(graph, source, target, budget);
-    result.reachableBefore = defender.isReachable(source, target);
+
+
+    // =========================
+    // TRUOC KHI PHONG THU
+    // =========================
+
+    // Hacker tan cong lan dau
+    result.before =
+        hackerSimulation(
+            graph,
+            source,
+            target,
+            budget
+        );
+
+    // Kiem tra S -> T con ket noi khong
+    result.reachableBefore =
+        defender.isReachable(
+            source,
+            target
+        );
+
+
+    // =========================
+    // CHON EDGE CAN PATCH
+    // =========================
+
+    // Patch thu cong
     if (manualPatch) {
-        result.patchedEdgeIds = *manualPatch;
-        result.defenseMessage = "Patch thu cong theo edge ID; khong phai ket qua Min-Cut.";
-    } else if (!result.reachableBefore) {
-        result.defenseMessage = "S-T da mat ket noi; khong can patch.";
-    } else if (source == target) {
-        result.defenseMessage = "S == T: duong rong cost 0, chan canh khong tach duoc S khoi chinh no.";
-    } else {
-        int id = defender.suggestCutEdge(source, target);
-        if (id >= 0) {
-            result.patchedEdgeIds.push_back(id);
-            result.defenseMessage = "Prototype P3 tim thay mot canh don le ngat S-T. Chua toi uu capacity.";
-        } else result.defenseMessage = "Khong co canh don le ngat S-T. Can Max-Flow/Min-Cut tu Nguoi 3.";
+
+        result.patchedEdgeIds =
+            *manualPatch;
+
+        result.defenseMessage =
+            "Patch thu cong theo edge ID.";
     }
-    graph.blockEdges(result.patchedEdgeIds);
-    // Cung graph da patch, cung budget ban dau; khong dung remainingToken cua lan truoc.
-    result.after = hackerSimulation(graph, source, target, budget);
-    result.reachableAfter = defender.isReachable(source, target);
+
+    // S va T da mat ket noi
+    else if (!result.reachableBefore) {
+
+        result.defenseMessage =
+            "S-T da mat ket noi, khong can patch.";
+    }
+
+    // Source va target la cung mot node
+    else if (source == target) {
+
+        result.defenseMessage =
+            "Source va target la cung mot node.";
+    }
+
+    // Tu dong tim edge can block
+    else {
+
+        int edgeId =
+            defender.suggestCutEdge(
+                source,
+                target
+            );
+
+        if (edgeId >= 0) {
+
+            result.patchedEdgeIds.push_back(
+                edgeId
+            );
+
+            result.defenseMessage =
+                "Tim thay edge co the ngat ket noi S-T.";
+        }
+        else {
+
+            result.defenseMessage =
+                "Khong co mot edge don le nao ngat duoc S-T.";
+        }
+    }
+
+
+    // =========================
+    // PATCH EDGE
+    // =========================
+
+    graph.blockEdges(
+        result.patchedEdgeIds
+    );
+
+
+    // =========================
+    // SAU KHI PHONG THU
+    // =========================
+
+    // Hacker tan cong lai voi budget ban dau
+    result.after =
+        hackerSimulation(
+            graph,
+            source,
+            target,
+            budget
+        );
+
+    // Kiem tra lai ket noi
+    result.reachableAfter =
+        defender.isReachable(
+            source,
+            target
+        );
+
+
     return result;
 }

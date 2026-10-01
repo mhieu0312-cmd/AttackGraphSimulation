@@ -1,81 +1,361 @@
 #include "LoadDataset.h"
+
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <limits>
+#include <optional>
 #include <set>
 #include <stdexcept>
+#include <string>
+#include <vector>
+
+using namespace std;
+using nlohmann::json;
+
+
+// =========================
+// DOC SO NGUYEN
+// =========================
 
 namespace {
-using nlohmann::json;
-int integer(const json& object, const std::string& key) {
-    const auto& value = object.at(key);
-    if (!value.is_number_integer()) throw std::invalid_argument(key + " phai la so nguyen");
+
+int getInteger(
+    const json& object,
+    const string& key
+) {
+
+    const json& value = object.at(key);
+
+    // Gia tri phai la so nguyen
+    if (!value.is_number_integer()) {
+        throw invalid_argument(
+            key + " phai la so nguyen"
+        );
+    }
+
+    // Truong hop so khong dau
     if (value.is_number_unsigned()) {
-        auto number = value.get<std::uint64_t>();
-        if (number > static_cast<std::uint64_t>(std::numeric_limits<int>::max()))
-            throw std::invalid_argument(key + " vuot mien int");
+
+        uint64_t number =
+            value.get<uint64_t>();
+
+        if (number >
+            static_cast<uint64_t>(
+                numeric_limits<int>::max()
+            )) {
+
+            throw invalid_argument(
+                key + " vuot mien int"
+            );
+        }
+
         return static_cast<int>(number);
     }
-    auto number = value.get<std::int64_t>();
-    if (number < 0 || number > std::numeric_limits<int>::max())
-        throw std::invalid_argument(key + " phai trong [0, INT_MAX]");
+
+
+    // Truong hop so co dau
+    int64_t number =
+        value.get<int64_t>();
+
+    if (number < 0 ||
+        number > numeric_limits<int>::max()) {
+
+        throw invalid_argument(
+            key + " phai trong [0, INT_MAX]"
+        );
+    }
+
     return static_cast<int>(number);
 }
-void fields(const json& object, const std::set<std::string>& allowed) {
-    if (!object.is_object()) throw std::invalid_argument("Can mot JSON object");
-    for (auto it = object.begin(); it != object.end(); ++it)
-        if (!allowed.count(it.key())) throw std::invalid_argument("Truong khong duoc ho tro: " + it.key());
-}
-}
-Graph loadDataset(std::istream& input) {
-    using nlohmann::json;
-    Graph graph;
-    try {
-        // JSON chuan: khong comment, khong duplicate key.
-        std::vector<std::set<std::string>> keys;
-        auto checkKeys = [&keys](int, json::parse_event_t event, json& parsed) {
-            if (event == json::parse_event_t::object_start) keys.emplace_back();
-            if (event == json::parse_event_t::key && !keys.back().insert(parsed.get<std::string>()).second)
-                throw std::invalid_argument("JSON co key trung: " + parsed.get<std::string>());
-            if (event == json::parse_event_t::object_end) keys.pop_back();
-            return true;
-        };
-        json data = json::parse(input, checkKeys);
-        fields(data, {"metadata", "nodes", "edges"});
-        if (!data.at("nodes").is_array() || !data.at("edges").is_array())
-            throw std::invalid_argument("nodes/edges phai la array");
-        std::size_t i = 0;
-        for (const auto& n : data.at("nodes")) {
-            try {
-                fields(n, {"id", "name", "type", "assets"});
-                graph.addNode(Node(integer(n, "id"), n.at("name").get<std::string>(),
-                                   nodeTypeFromString(n.at("type").get<std::string>()), integer(n, "assets")));
-            } catch (const std::exception& e) {
-                throw std::invalid_argument("nodes[" + std::to_string(i) + "]: " + e.what());
-            }
-            ++i;
-        }
-        i = 0;
-        for (const auto& e : data.at("edges")) {
-            try {
-                fields(e, {"id", "from", "to", "weight", "relation", "blocked", "capacity"});
-                std::optional<int> capacity;
-                if (e.contains("capacity") && !e.at("capacity").is_null()) capacity = integer(e, "capacity");
-                bool blocked = e.contains("blocked") ? e.at("blocked").get<bool>() : false;
-                graph.addEdge(Edge(integer(e, "from"), integer(e, "to"), integer(e, "weight"),
-                                   e.at("relation").get<std::string>(), blocked, integer(e, "id"), capacity));
-            } catch (const std::exception& ex) {
-                throw std::invalid_argument("edges[" + std::to_string(i) + "]: " + ex.what());
-            }
-            ++i;
-        }
-    } catch (const std::exception& e) {
-        throw std::invalid_argument(std::string("Dataset khong hop le: ") + e.what());
+
+
+// =========================
+// KIEM TRA CAC FIELD
+// =========================
+
+void checkFields(
+    const json& object,
+    const set<string>& allowed
+) {
+
+    // Du lieu phai la JSON object
+    if (!object.is_object()) {
+        throw invalid_argument(
+            "Can mot JSON object"
+        );
     }
+
+    // Kiem tra field la
+    for (auto it = object.begin();
+         it != object.end();
+         ++it) {
+
+        if (!allowed.count(it.key())) {
+
+            throw invalid_argument(
+                "Truong khong duoc ho tro: "
+                + it.key()
+            );
+        }
+    }
+}
+
+}
+
+
+// =========================
+// LOAD DATASET TU STREAM
+// =========================
+
+Graph loadDataset(istream& input) {
+
+    Graph graph;
+
+    try {
+
+        // Kiem tra duplicate key trong JSON
+        vector<set<string>> keys;
+
+        auto checkKeys =
+            [&keys](
+                int,
+                json::parse_event_t event,
+                json& parsed
+            ) {
+
+                if (event ==
+                    json::parse_event_t::object_start) {
+
+                    keys.emplace_back();
+                }
+
+
+                if (event ==
+                    json::parse_event_t::key) {
+
+                    string key =
+                        parsed.get<string>();
+
+                    if (!keys.back().insert(key).second) {
+
+                        throw invalid_argument(
+                            "JSON co key trung: "
+                            + key
+                        );
+                    }
+                }
+
+
+                if (event ==
+                    json::parse_event_t::object_end) {
+
+                    keys.pop_back();
+                }
+
+
+                return true;
+            };
+
+
+        // Doc JSON
+        json data =
+            json::parse(input, checkKeys);
+
+
+        // Cac field cho phep o root
+        checkFields(
+            data,
+            {
+                "metadata",
+                "nodes",
+                "edges"
+            }
+        );
+
+
+        // nodes va edges phai la array
+        if (!data.at("nodes").is_array() ||
+            !data.at("edges").is_array()) {
+
+            throw invalid_argument(
+                "nodes/edges phai la array"
+            );
+        }
+
+
+        // =========================
+        // LOAD NODE
+        // =========================
+
+        size_t i = 0;
+
+        for (const json& nodeData :
+             data.at("nodes")) {
+
+            try {
+
+                checkFields(
+                    nodeData,
+                    {
+                        "id",
+                        "name",
+                        "type",
+                        "assets"
+                    }
+                );
+
+
+                Node node(
+                    getInteger(nodeData, "id"),
+
+                    nodeData.at("name")
+                        .get<string>(),
+
+                    nodeTypeFromString(
+                        nodeData.at("type")
+                            .get<string>()
+                    ),
+
+                    getInteger(
+                        nodeData,
+                        "assets"
+                    )
+                );
+
+
+                graph.addNode(node);
+            }
+
+            catch (const exception& e) {
+
+                throw invalid_argument(
+                    "nodes["
+                    + to_string(i)
+                    + "]: "
+                    + e.what()
+                );
+            }
+
+
+            ++i;
+        }
+
+
+        // =========================
+        // LOAD EDGE
+        // =========================
+
+        i = 0;
+
+        for (const json& edgeData :
+             data.at("edges")) {
+
+            try {
+
+                checkFields(
+                    edgeData,
+                    {
+                        "id",
+                        "from",
+                        "to",
+                        "weight",
+                        "relation",
+                        "blocked",
+                        "capacity"
+                    }
+                );
+
+
+                // Capacity co the khong co
+                optional<int> capacity;
+
+                if (edgeData.contains("capacity") &&
+                    !edgeData.at("capacity").is_null()) {
+
+                    capacity =
+                        getInteger(
+                            edgeData,
+                            "capacity"
+                        );
+                }
+
+
+                // blocked mac dinh la false
+                bool blocked = false;
+
+                if (edgeData.contains("blocked")) {
+
+                    blocked =
+                        edgeData.at("blocked")
+                            .get<bool>();
+                }
+
+
+                Edge edge(
+                    getInteger(edgeData, "from"),
+                    getInteger(edgeData, "to"),
+                    getInteger(edgeData, "weight"),
+
+                    edgeData.at("relation")
+                        .get<string>(),
+
+                    blocked,
+
+                    getInteger(edgeData, "id"),
+
+                    capacity
+                );
+
+
+                graph.addEdge(edge);
+            }
+
+            catch (const exception& e) {
+
+                throw invalid_argument(
+                    "edges["
+                    + to_string(i)
+                    + "]: "
+                    + e.what()
+                );
+            }
+
+
+            ++i;
+        }
+    }
+
+    catch (const exception& e) {
+
+        throw invalid_argument(
+            string("Dataset khong hop le: ")
+            + e.what()
+        );
+    }
+
+
     return graph;
 }
-Graph loadDataset(const std::string& filename) {
-    std::ifstream input(filename);
-    if (!input) throw std::runtime_error("Khong mo duoc dataset: " + filename);
+
+
+// =========================
+// LOAD DATASET TU FILE
+// =========================
+
+Graph loadDataset(
+    const string& filename
+) {
+
+    ifstream input(filename);
+
+    // Kiem tra file co mo duoc khong
+    if (!input) {
+
+        throw runtime_error(
+            "Khong mo duoc dataset: "
+            + filename
+        );
+    }
+
     return loadDataset(input);
 }

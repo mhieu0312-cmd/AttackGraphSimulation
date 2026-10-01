@@ -1,8 +1,23 @@
 #pragma once
+
 #include "Graph.h"
+
 #include <istream>
 #include <string>
 
-// Build graph tam; neu loi thi khong de lai graph dang load do.
-Graph loadDataset(std::istream& input);
-Graph loadDataset(const std::string& filename);
+using namespace std;
+
+
+// =========================
+// LOAD DATASET
+// =========================
+
+// Doc dataset tu stream
+Graph loadDataset(
+    istream& input
+);
+
+// Doc dataset tu file JSON
+Graph loadDataset(
+    const string& filename
+);

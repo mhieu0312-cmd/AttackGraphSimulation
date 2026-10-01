@@ -1,19 +1,79 @@
 #pragma once
+
 #include <string>
 
-enum class NodeType { ENTRY, ENDPOINT, IDENTITY, CRITICAL_SYSTEM, TARGET };
-std::string nodeTypeToString(NodeType type);
-NodeType nodeTypeFromString(const std::string& text);
+using namespace std;
+
+
+// =========================
+// LOAI NODE
+// =========================
+
+enum class NodeType {
+
+    // Diem hacker bat dau
+    ENTRY,
+
+    // May tinh nguoi dung
+    ENDPOINT,
+
+    // Tai khoan hoac quyen truy cap
+    IDENTITY,
+
+    // Server / he thong quan trong
+    CRITICAL_SYSTEM,
+
+    // Muc tieu cuoi
+    TARGET
+};
+
+
+// Chuyen NodeType thanh string
+string nodeTypeToString(
+    NodeType type
+);
+
+// Chuyen string thanh NodeType
+NodeType nodeTypeFromString(
+    const string& text
+);
+
+
+// =========================
+// NODE
+// =========================
 
 class Node {
+
+private:
+
+    // ID cua node
     int id;
-    std::string name;
+
+    // Ten node
+    string name;
+
+    // Loai cua node
     NodeType type;
+
+    // Gia tri / muc do quan trong cua node
     int assets;
+
+
 public:
-    Node(int id, std::string name, NodeType type, int assets);
+    // Constructor
+    Node(
+        int id,
+        string name,
+        NodeType type,
+        int assets
+    );
+    // Getter
     int getID() const;
-    std::string getName() const;
+
+    string getName() const;
+
     NodeType getType() const;
+
     int getAssets() const;
 };
