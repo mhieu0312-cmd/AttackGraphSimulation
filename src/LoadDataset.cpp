@@ -2,105 +2,10 @@
 
 #include <nlohmann/json.hpp>
 #include <fstream>
-#include <limits>
-#include <optional>
-#include <set>
 #include <stdexcept>
-#include <string>
-#include <vector>
 
 using namespace std;
 using nlohmann::json;
-
-
-// =========================
-// DOC SO NGUYEN
-// =========================
-
-namespace {
-
-int getInteger(
-    const json& object,
-    const string& key
-) {
-
-    const json& value = object.at(key);
-
-    // Gia tri phai la so nguyen
-    if (!value.is_number_integer()) {
-        throw invalid_argument(
-            key + " phai la so nguyen"
-        );
-    }
-
-    // Truong hop so khong dau
-    if (value.is_number_unsigned()) {
-
-        uint64_t number =
-            value.get<uint64_t>();
-
-        if (number >
-            static_cast<uint64_t>(
-                numeric_limits<int>::max()
-            )) {
-
-            throw invalid_argument(
-                key + " vuot mien int"
-            );
-        }
-
-        return static_cast<int>(number);
-    }
-
-
-    // Truong hop so co dau
-    int64_t number =
-        value.get<int64_t>();
-
-    if (number < 0 ||
-        number > numeric_limits<int>::max()) {
-
-        throw invalid_argument(
-            key + " phai trong [0, INT_MAX]"
-        );
-    }
-
-    return static_cast<int>(number);
-}
-
-
-// =========================
-// KIEM TRA CAC FIELD
-// =========================
-
-void checkFields(
-    const json& object,
-    const set<string>& allowed
-) {
-
-    // Du lieu phai la JSON object
-    if (!object.is_object()) {
-        throw invalid_argument(
-            "Can mot JSON object"
-        );
-    }
-
-    // Kiem tra field la
-    for (auto it = object.begin();
-         it != object.end();
-         ++it) {
-
-        if (!allowed.count(it.key())) {
-
-            throw invalid_argument(
-                "Truong khong duoc ho tro: "
-                + it.key()
-            );
-        }
-    }
-}
-
-}
 
 
 // =========================
@@ -113,73 +18,16 @@ Graph loadDataset(istream& input) {
 
     try {
 
-        // Kiem tra duplicate key trong JSON
-        vector<set<string>> keys;
+        json data;
+        input >> data;
 
-        auto checkKeys =
-            [&keys](
-                int,
-                json::parse_event_t event,
-                json& parsed
-            ) {
+        // Kiem tra nodes va edges
+        if (!data.contains("nodes") || !data["nodes"].is_array()) {
+            throw invalid_argument("nodes khong hop le");
+        }
 
-                if (event ==
-                    json::parse_event_t::object_start) {
-
-                    keys.emplace_back();
-                }
-
-
-                if (event ==
-                    json::parse_event_t::key) {
-
-                    string key =
-                        parsed.get<string>();
-
-                    if (!keys.back().insert(key).second) {
-
-                        throw invalid_argument(
-                            "JSON co key trung: "
-                            + key
-                        );
-                    }
-                }
-
-
-                if (event ==
-                    json::parse_event_t::object_end) {
-
-                    keys.pop_back();
-                }
-
-
-                return true;
-            };
-
-
-        // Doc JSON
-        json data =
-            json::parse(input, checkKeys);
-
-
-        // Cac field cho phep o root
-        checkFields(
-            data,
-            {
-                "metadata",
-                "nodes",
-                "edges"
-            }
-        );
-
-
-        // nodes va edges phai la array
-        if (!data.at("nodes").is_array() ||
-            !data.at("edges").is_array()) {
-
-            throw invalid_argument(
-                "nodes/edges phai la array"
-            );
+        if (!data.contains("edges") || !data["edges"].is_array()) {
+            throw invalid_argument("edges khong hop le");
         }
 
 
@@ -187,57 +35,29 @@ Graph loadDataset(istream& input) {
         // LOAD NODE
         // =========================
 
-        size_t i = 0;
+        for (const json& nodeData : data["nodes"]) {
 
-        for (const json& nodeData :
-             data.at("nodes")) {
+            int id = nodeData.at("id").get<int>();
 
-            try {
+            string name =
+                nodeData.at("name").get<string>();
 
-                checkFields(
-                    nodeData,
-                    {
-                        "id",
-                        "name",
-                        "type",
-                        "assets"
-                    }
+            NodeType type =
+                nodeTypeFromString(
+                    nodeData.at("type").get<string>()
                 );
 
+            int assets =
+                nodeData.at("assets").get<int>();
 
-                Node node(
-                    getInteger(nodeData, "id"),
+            Node node(
+                id,
+                name,
+                type,
+                assets
+            );
 
-                    nodeData.at("name")
-                        .get<string>(),
-
-                    nodeTypeFromString(
-                        nodeData.at("type")
-                            .get<string>()
-                    ),
-
-                    getInteger(
-                        nodeData,
-                        "assets"
-                    )
-                );
-
-
-                graph.addNode(node);
-            }
-
-            catch (const exception& e) {
-
-                throw invalid_argument(
-                    "nodes["
-                    + to_string(i)
-                    + "]: "
-                    + e.what()
-                );
-            }
-
-
-            ++i;
+            graph.addNode(node);
         }
 
 
@@ -245,83 +65,44 @@ Graph loadDataset(istream& input) {
         // LOAD EDGE
         // =========================
 
-        i = 0;
+        for (const json& edgeData : data["edges"]) {
 
-        for (const json& edgeData :
-             data.at("edges")) {
+            int id =
+                edgeData.at("id").get<int>();
 
-            try {
+            int from =
+                edgeData.at("from").get<int>();
 
-                checkFields(
-                    edgeData,
-                    {
-                        "id",
-                        "from",
-                        "to",
-                        "weight",
-                        "relation",
-                        "blocked",
-                        "capacity"
-                    }
-                );
+            int to =
+                edgeData.at("to").get<int>();
 
+            int weight =
+                edgeData.at("weight").get<int>();
 
-                // Capacity co the khong co
-                optional<int> capacity;
+            string relation =
+                edgeData.at("relation").get<string>();
 
-                if (edgeData.contains("capacity") &&
-                    !edgeData.at("capacity").is_null()) {
+            int capacity =
+                edgeData.at("capacity").get<int>();
 
-                    capacity =
-                        getInteger(
-                            edgeData,
-                            "capacity"
-                        );
-                }
+            bool blocked = false;
 
-
-                // blocked mac dinh la false
-                bool blocked = false;
-
-                if (edgeData.contains("blocked")) {
-
-                    blocked =
-                        edgeData.at("blocked")
-                            .get<bool>();
-                }
-
-
-                Edge edge(
-                    getInteger(edgeData, "from"),
-                    getInteger(edgeData, "to"),
-                    getInteger(edgeData, "weight"),
-
-                    edgeData.at("relation")
-                        .get<string>(),
-
-                    blocked,
-
-                    getInteger(edgeData, "id"),
-
-                    capacity
-                );
-
-
-                graph.addEdge(edge);
+            if (edgeData.contains("blocked")) {
+                blocked =
+                    edgeData.at("blocked").get<bool>();
             }
 
-            catch (const exception& e) {
+            Edge edge(
+                from,
+                to,
+                weight,
+                relation,
+                blocked,
+                id,
+                capacity
+            );
 
-                throw invalid_argument(
-                    "edges["
-                    + to_string(i)
-                    + "]: "
-                    + e.what()
-                );
-            }
-
-
-            ++i;
+            graph.addEdge(edge);
         }
     }
 
@@ -333,7 +114,6 @@ Graph loadDataset(istream& input) {
         );
     }
 
-
     return graph;
 }
 
@@ -342,15 +122,11 @@ Graph loadDataset(istream& input) {
 // LOAD DATASET TU FILE
 // =========================
 
-Graph loadDataset(
-    const string& filename
-) {
+Graph loadDataset(const string& filename) {
 
     ifstream input(filename);
 
-    // Kiem tra file co mo duoc khong
     if (!input) {
-
         throw runtime_error(
             "Khong mo duoc dataset: "
             + filename

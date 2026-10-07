@@ -8,94 +8,94 @@
 #include <string>
 #include <vector>
 
+using namespace std;
+
 namespace {
 
-std::int64_t number(const char* text) {
-    std::string s(text);
+// Chuyen tham so thanh so nguyen khong am
+int64_t number(const char* text) {
 
-    if (s.empty() || s.find_first_not_of("0123456789") != std::string::npos) {
-        throw std::invalid_argument("Tham so phai la so nguyen khong am");
+    string s(text);
+
+    if (s.empty() ||
+        s.find_first_not_of("0123456789") != string::npos) {
+
+        throw invalid_argument(
+            "Tham so phai la so nguyen khong am"
+        );
     }
 
-    std::size_t end = 0;
-    std::int64_t value = std::stoll(s, &end);
+    size_t end = 0;
+    int64_t value = stoll(s, &end);
 
     if (end != s.size()) {
-        throw std::invalid_argument("Tham so khong hop le");
+        throw invalid_argument(
+            "Tham so khong hop le"
+        );
     }
 
     return value;
 }
 
-int idNumber(const char* text) {
-    std::int64_t value = number(text);
 
-    if (value > std::numeric_limits<int>::max()) {
-        throw std::invalid_argument("ID vuot mien int");
+// Chuyen tham so thanh ID
+int idNumber(const char* text) {
+
+    int64_t value = number(text);
+
+    if (value > numeric_limits<int>::max()) {
+        throw invalid_argument(
+            "ID vuot mien int"
+        );
     }
 
     return static_cast<int>(value);
 }
 
+
+// Huong dan cach chay
 void usage() {
-    std::cout
+
+    cout
         << "Usage:\n"
         << "  AttackGraph\n"
         << "  AttackGraph --demo\n"
         << "  AttackGraph <dataset> <source> <target> <budget>\n"
-        << "  AttackGraph <dataset> <source> <target> <budget> --patch <edgeId...>\n";
+        << "  AttackGraph <dataset> <source> <target> <budget> "
+           "--patch <edgeId...>\n";
 }
 
 }
-
 
 int main(int argc, char* argv[]) {
+
     try {
 
         // =========================
-        // DEFAULT CONFIGURATION
+        // CAU HINH MAC DINH
         // =========================
 
-        std::string filename =
-            std::string(PROJECT_ROOT) + "/data/graph.json";
+        string filename =
+            string(PROJECT_ROOT) + "/data/graph.json";
 
         int source = 0;
         int target = 37;
-        std::int64_t budget = 15;
+        int64_t budget = 15;
 
-        std::optional<std::vector<int>> manual;
+        optional<vector<int>> manual;
 
 
         // =========================
         // HELP
         // =========================
 
-        if (argc == 2 && std::string(argv[1]) == "--help") {
+        if (argc == 2 && string(argv[1]) == "--help") {
+
             usage();
             return 0;
         }
-
-
         // =========================
-        // DEMO DATASET
-        // =========================
-
-        if (argc == 2 && std::string(argv[1]) == "--demo") {
-
-            filename =
-                std::string(PROJECT_ROOT)
-                + "/tests/fixtures/p2_demo.json";
-
-            source = 0;
-            target = 3;
-            budget = 15;
-
-            std::cout << "Running demo dataset\n";
-        }
-
-
-        // =========================
-        // MANUAL ARGUMENTS
+        // THAM SO TU NGUOI DUNG
         // =========================
 
         else if (argc > 1) {
@@ -106,24 +106,29 @@ int main(int argc, char* argv[]) {
             }
 
             filename = argv[1];
+
             source = idNumber(argv[2]);
             target = idNumber(argv[3]);
             budget = number(argv[4]);
 
 
-            // Manual patch
+            // Patch thu cong
             if (argc > 5) {
 
-                if (std::string(argv[5]) != "--patch" || argc == 6) {
-                    throw std::invalid_argument(
+                if (string(argv[5]) != "--patch" ||
+                    argc == 6) {
+
+                    throw invalid_argument(
                         "Can --patch va it nhat mot edge ID"
                     );
                 }
 
-                manual = std::vector<int>{};
+                manual = vector<int>{};
 
                 for (int i = 6; i < argc; ++i) {
-                    manual->push_back(idNumber(argv[i]));
+                    manual->push_back(
+                        idNumber(argv[i])
+                    );
                 }
             }
         }
@@ -137,80 +142,126 @@ int main(int argc, char* argv[]) {
 
         auto stats = graph.statistics();
 
-        std::cout << "\n=== DATASET ===\n";
-        std::cout << "File: " << filename << '\n';
-        std::cout << "Nodes: " << stats.nodes << '\n';
-        std::cout << "Edges: " << stats.edges << '\n';
-        std::cout << "Source: " << source << '\n';
-        std::cout << "Target: " << target << '\n';
-        std::cout << "Budget: " << budget << '\n';
+        cout << "\n=== DATASET ===\n";
+        cout << "File: " << filename << '\n';
+        cout << "Nodes: " << stats.nodes << '\n';
+        cout << "Edges: " << stats.edges << '\n';
+        cout << "Source: " << source << '\n';
+        cout << "Target: " << target << '\n';
+        cout << "Budget: " << budget << '\n';
 
 
-        // Validation warnings
-        for (const auto& warning : graph.validationWarnings()) {
-            std::cout << "Warning: " << warning << '\n';
+        // Kiem tra dataset
+        for (const auto& warning :
+             graph.validationWarnings()) {
+
+            cout
+                << "Warning: "
+                << warning
+                << '\n';
         }
 
 
         // =========================
-        // SIMULATION
+        // CHAY MO PHONG
         // =========================
 
-        auto result =
-            runSimulation(graph, source, target, budget, manual);
+        auto result = runSimulation(
+            graph,
+            source,
+            target,
+            budget,
+            manual
+        );
 
 
-        std::cout << "\n=== BEFORE PATCH ===\n";
-        printAttack(result.before, std::cout);
+        // =========================
+        // TRUOC KHI PATCH
+        // =========================
+
+        cout << "\n=== BEFORE PATCH ===\n";
+
+        printAttack(
+            result.before,
+            cout
+        );
 
 
-        std::cout << "\n=== DEFENSE ===\n";
-        std::cout << result.defenseMessage << '\n';
+        // =========================
+        // PHONG THU
+        // =========================
 
-        std::cout << "Patched edges: ";
+        cout << "\n=== DEFENSE ===\n";
+
+        cout
+            << result.defenseMessage
+            << '\n';
+
+        cout << "Patched edges: ";
 
         if (result.patchedEdgeIds.empty()) {
-            std::cout << "none";
+
+            cout << "none";
         }
         else {
-            for (int id : result.patchedEdgeIds) {
-                std::cout << id << ' ';
+
+            for (int id :
+                 result.patchedEdgeIds) {
+
+                cout << id << ' ';
             }
         }
 
-        std::cout << '\n';
-
-
-        std::cout << "\n=== AFTER PATCH ===\n";
-        printAttack(result.after, std::cout);
+        cout << '\n';
 
 
         // =========================
-        // RESULT
+        // SAU KHI PATCH
         // =========================
 
-        std::cout << "\n=== RESULT ===\n";
+        cout << "\n=== AFTER PATCH ===\n";
 
-        std::cout
+        printAttack(
+            result.after,
+            cout
+        );
+
+
+        // =========================
+        // KET QUA
+        // =========================
+
+        cout << "\n=== RESULT ===\n";
+
+        cout
             << "Reachable: "
             << result.reachableBefore
             << " -> "
             << result.reachableAfter
             << '\n';
 
-        std::cout
+        cout
             << "Blocked edges: "
             << stats.blockedEdges
             << " -> "
             << graph.statistics().blockedEdges
             << '\n';
 
-
         return 0;
     }
 
-    catch (const std::exception& e) {
-        std::cerr << "ERROR: " << e.what() << '\n';
+
+    // =========================
+    // BAT LOI
+    // =========================
+
+    catch (const exception& e) {
+
+        cerr
+            << "ERROR: "
+            << e.what()
+            << '\n';
+
         return 1;
     }
 }

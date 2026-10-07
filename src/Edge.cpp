@@ -1,7 +1,5 @@
 #include "Edge.h"
 
-#include <utility>
-
 using namespace std;
 
 
@@ -16,12 +14,12 @@ Edge::Edge(
     string relation,
     bool blocked,
     int id,
-    optional<int> capacity
+    int capacity
 )
     : from(from),
       to(to),
       weight(weight),
-      relation(move(relation)),
+      relation(relation),
       blocked(blocked),
       id(id),
       capacity(capacity) {
@@ -56,7 +54,7 @@ bool Edge::isBlocked() const {
     return blocked;
 }
 
-optional<int> Edge::getCapacity() const {
+int Edge::getCapacity() const {
     return capacity;
 }
 
