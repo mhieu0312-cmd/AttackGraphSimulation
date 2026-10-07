@@ -1,0 +1,18 @@
+COMMAND: ['/workspace/scratch/b4a55936a706/tool-deps/cmake/data/bin/cmake', '--build', '/workspace/scratch/b4a55936a706/release-check/build', '--parallel', '2']
+[  8%] Building CXX object CMakeFiles/attackgraph_core.dir/src/Node.cpp.o
+[ 16%] Building CXX object CMakeFiles/attackgraph_core.dir/src/Edge.cpp.o
+[ 25%] Building CXX object CMakeFiles/attackgraph_core.dir/src/Graph.cpp.o
+[ 33%] Building CXX object CMakeFiles/attackgraph_core.dir/src/LoadDataset.cpp.o
+[ 41%] Building CXX object CMakeFiles/attackgraph_core.dir/src/Dijkstra.cpp.o
+[ 50%] Building CXX object CMakeFiles/attackgraph_core.dir/src/Defender.cpp.o
+[ 58%] Building CXX object CMakeFiles/attackgraph_core.dir/src/Simulation.cpp.o
+[ 66%] Linking CXX static library libattackgraph_core.a
+[ 66%] Built target attackgraph_core
+[ 75%] Building CXX object CMakeFiles/AttackGraph.dir/src/main.cpp.o
+[ 83%] Building CXX object CMakeFiles/attackgraph_tests.dir/tests/test_main.cpp.o
+[ 91%] Linking CXX executable AttackGraph
+[ 91%] Built target AttackGraph
+[100%] Linking CXX executable attackgraph_tests
+[100%] Built target attackgraph_tests
+
+EXIT: 0

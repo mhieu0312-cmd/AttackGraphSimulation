@@ -1,0 +1,16 @@
+COMMAND: /tmp/original-attack
+CWD: /workspace/scratch/b4a55936a706
+EXIT: 0
+=== BEFORE PATCH ===
+Source: 0 | Target: 3
+Budget: 15 token
+Duong re nhat: 0 -> 1 -> 2 -> 3
+Chi phi: 13 token
+Hacker SUCCESS. Token con lai: 2
+
+=== AFTER PATCH: block edge 2 -> 3 ===
+Source: 0 | Target: 3
+Budget: 15 token
+Duong re nhat: 0 -> 1 -> 3
+Chi phi: 19 token
+Hacker FAIL: chi phi vuot Budget.
