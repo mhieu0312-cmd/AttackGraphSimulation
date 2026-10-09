@@ -214,6 +214,13 @@ int main(int argc, char* argv[]) {
             << result.defenseMessage
             << '\n';
 
+        if (result.minCut) {
+            cout << "Max-Flow: " << result.minCut->maxFlow << '\n';
+            cout << "Min-Cut Capacity: " << result.minCut->minCutCapacity << '\n';
+        } else {
+            cout << "Max-Flow: N/A (Min-Cut khong duoc tinh)\n";
+            cout << "Min-Cut Capacity: N/A (Min-Cut khong duoc tinh)\n";
+        }
         cout << "Patched edges: ";
 
         if (result.patchedEdgeIds.empty()) {
@@ -230,6 +237,7 @@ int main(int argc, char* argv[]) {
         }
 
         cout << '\n';
+        cout << "Newly blocked edges: " << result.newlyBlockedEdges << '\n';
 
 
         // =========================

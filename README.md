@@ -44,6 +44,10 @@ Dataset được copy vào `data/` cạnh executable khi build. Chương trình 
 
 - `SUCCESS`: cost ≤ budget; `OVER_BUDGET`: có đường nhưng thiếu token; `NO_PATH`: không có đường.
 - Sau patch, attacker được cấp lại budget ban đầu. Patch đổi `blocked` trong bộ nhớ, không ghi JSON.
-- Defender hiện chỉ thử cắt **một cạnh**. Dataset hiện tại có nhiều đường độc lập, nên auto defense báo không tìm được một cạnh để ngắt S–T; đây là giới hạn prototype, không phải lỗi chạy.
-- Chưa có Max-Flow/Minimum S-T Cut theo capacity. Có thể dùng `--patch` để chặn nhiều cạnh thủ công.
+- Auto Defense gọi `minimumSTCut()` rồi block toàn bộ Edge ID trong tập cut. Mặc định: Max-Flow = Min-Cut Capacity = 6, patch `47 48 49`, sau đó `NO_PATH`, reachable `1 → 0`, blocked `0 → 3`.
+- Min-Cut Capacity là chi phí phòng thủ của mô hình, khác Attack Cost và Token Budget. Auto Defense vẫn chạy khi attacker ban đầu `OVER_BUDGET` nhưng S–T còn reachable.
+- `--patch` giữ chế độ thủ công; không tính Min-Cut, output flow/cut là `N/A`. Kiểm tra toàn bộ ID trước patch, bỏ qua cạnh đã blocked và ID lặp khi báo số cạnh mới chặn.
+- S–T đã mất kết nối hoặc source = target: không patch trong cả hai chế độ. Manual ID sai vẫn bị từ chối trước khi thay đổi Graph.
+- `runSimulation(Graph&, ...)` cập nhật Graph truyền vào. Để chạy các scenario độc lập, giữ `const Graph initial = loadDataset(...)`, rồi dùng `Graph scenario = initial` cho mỗi lần gọi; hoặc load lại file. Không tự mở lại các cạnh vốn đã blocked trong dataset.
+- Mỗi lần chạy CLI load lại dataset, không dùng trạng thái patch lần trước.
 - CTest kiểm tra CLI hiện tại. Các báo cáo trong `docs/` là tài liệu lịch sử; repo hiện không có bộ 47 unit test hoặc folder `reference` được nhắc trong báo cáo cũ.
