@@ -3,10 +3,31 @@
 #include <nlohmann/json.hpp>
 #include <fstream>
 #include <stdexcept>
+#include <limits>
 
 using namespace std;
 using nlohmann::json;
 
+
+namespace {
+// JSON get<int>() can truncate floats or overflow; validate before conversion.
+int integerField(const json& object, const char* key) {
+    const auto& value = object.at(key);
+    if (value.is_number_unsigned()) {
+        if (value.get<uint64_t>() > static_cast<uint64_t>(numeric_limits<int>::max())) {
+            throw invalid_argument(string(key) + " vuot mien int");
+        }
+    } else if (value.is_number_integer()) {
+        const auto number = value.get<int64_t>();
+        if (number < numeric_limits<int>::min() || number > numeric_limits<int>::max()) {
+            throw invalid_argument(string(key) + " vuot mien int");
+        }
+    } else {
+        throw invalid_argument(string(key) + " phai la so nguyen");
+    }
+    return value.get<int>();
+}
+}
 
 // =========================
 // LOAD DATASET TU STREAM
@@ -37,7 +58,7 @@ Graph loadDataset(istream& input) {
 
         for (const json& nodeData : data["nodes"]) {
 
-            int id = nodeData.at("id").get<int>();
+            int id = integerField(nodeData, "id");
 
             string name =
                 nodeData.at("name").get<string>();
@@ -48,7 +69,7 @@ Graph loadDataset(istream& input) {
                 );
 
             int assets =
-                nodeData.at("assets").get<int>();
+                integerField(nodeData, "assets");
 
             Node node(
                 id,
@@ -68,22 +89,22 @@ Graph loadDataset(istream& input) {
         for (const json& edgeData : data["edges"]) {
 
             int id =
-                edgeData.at("id").get<int>();
+                integerField(edgeData, "id");
 
             int from =
-                edgeData.at("from").get<int>();
+                integerField(edgeData, "from");
 
             int to =
-                edgeData.at("to").get<int>();
+                integerField(edgeData, "to");
 
             int weight =
-                edgeData.at("weight").get<int>();
+                integerField(edgeData, "weight");
 
             string relation =
                 edgeData.at("relation").get<string>();
 
             int capacity =
-                edgeData.at("capacity").get<int>();
+                integerField(edgeData, "capacity");
 
             bool blocked = false;
 

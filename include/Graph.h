@@ -58,6 +58,9 @@ public:
     // Lay cac edge di ra va chua bi block
     vector<const Edge*> getOutGoingEdge(int id) const;
 
+    // DFS theo thu tu them canh; chi duyet canh chua block, khong doi graph.
+    vector<int> dfs(int start) const;
+
     // Kiem tra edge da bi block chua
     bool isBlocked(int edgeId) const;
 

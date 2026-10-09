@@ -1,5 +1,8 @@
 #include "Graph.h"
 
+#include <algorithm>
+#include <cctype>
+#include <unordered_set>
 #include <stdexcept>
 
 using namespace std;
@@ -53,10 +56,14 @@ void Graph::addNode(Node node) {
         throw invalid_argument("Node ID khong hop le");
     }
 
-    if (node.getName().empty()) {
+    const string name = node.getName();
+    if (name.empty() || all_of(name.begin(), name.end(),
+            [](unsigned char c) { return std::isspace(c) != 0; })) {
         throw invalid_argument("Node name rong");
     }
 
+    // Reject invalid enum values even when nodes are added directly.
+    nodeTypeToString(node.getType());
     Nodes.push_back(node);
 }
 
@@ -80,6 +87,12 @@ void Graph::addEdge(Edge edge) {
 
     if (edge.getCapacity() < 0) {
         throw invalid_argument("Capacity phai >= 0");
+    }
+
+    const string relation = edge.getRelation();
+    if (relation != "HasSession" && relation != "AdminTo" &&
+        relation != "MemberOf" && relation != "AccessTo") {
+        throw invalid_argument("Relation khong hop le: " + relation);
     }
 
     Edges.push_back(edge);
@@ -237,5 +250,53 @@ vector<string> Graph::validationWarnings() const {
         result.push_back("Khong co node TARGET");
     }
 
+    // Isolation concerns the stored topology, including blocked edges.
+    unordered_set<int> incident;
+    for (const auto& edge : Edges) {
+        incident.insert(edge.getFrom());
+        incident.insert(edge.getTo());
+    }
+    unordered_set<int> reachable;
+    for (const auto& node : Nodes) {
+        if (node.getType() == NodeType::ENTRY) {
+            for (int id : dfs(node.getID())) {
+                reachable.insert(id);
+            }
+        }
+    }
+    for (const auto& node : Nodes) {
+        if (incident.count(node.getID()) == 0) {
+            result.push_back("Node co lap ID " + to_string(node.getID()));
+        }
+        if (node.getType() == NodeType::TARGET &&
+            reachable.count(node.getID()) == 0) {
+            result.push_back("TARGET khong reachable tu ENTRY: ID " +
+                             to_string(node.getID()));
+        }
+    }
+
     return result;
+}
+
+vector<int> Graph::dfs(int start) const {
+    requireNode(start);
+    vector<int> order;
+    vector<int> stack{start};
+    unordered_set<int> visited;
+    while (!stack.empty()) {
+        const int current = stack.back();
+        stack.pop_back();
+        if (!visited.insert(current).second) {
+            continue;
+        }
+        order.push_back(current);
+        const auto edges = getOutGoingEdge(current);
+        // Reverse push preserves the order in which outgoing edges were added.
+        for (auto it = edges.rbegin(); it != edges.rend(); ++it) {
+            if (visited.count((*it)->getTo()) == 0) {
+                stack.push_back((*it)->getTo());
+            }
+        }
+    }
+    return order;
 }
