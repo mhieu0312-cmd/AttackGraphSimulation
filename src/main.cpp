@@ -75,29 +75,28 @@ int main(int argc, char* argv[]) {
         // CAU HINH MAC DINH
         // =========================
 
-        string filename =
-            string(PROJECT_ROOT) + "/data/graph.json";
+        string filename = string(PROJECT_ROOT) + "/data/graph.json";
 
-        int source = 0;
-        int target = 37;
+        // Sửa source thành 37, target thành 1 (thay vì 0 và 37)
+        int source = 37;
+        int target = 1;
         int64_t budget = 15;
 
         optional<vector<int>> manual;
-
-
         // =========================
         // HELP
         // =========================
-
         if (argc == 2 && string(argv[1]) == "--help") {
-
             usage();
             return 0;
+        }
+        // Thêm xử lý cho cờ --demo
+        if (argc == 2 && string(argv[1]) == "--demo") {
+            // Giữ nguyên giá trị mặc định (37 -> 1, budget 15) để chạy demo
         }
         // =========================
         // THAM SO TU NGUOI DUNG
         // =========================
-
         else if (argc > 1) {
 
             if (argc < 5) {
@@ -111,13 +110,10 @@ int main(int argc, char* argv[]) {
             target = idNumber(argv[3]);
             budget = number(argv[4]);
 
-
             // Patch thu cong
             if (argc > 5) {
 
-                if (string(argv[5]) != "--patch" ||
-                    argc == 6) {
-
+                if (string(argv[5]) != "--patch" || argc == 6) {
                     throw invalid_argument(
                         "Can --patch va it nhat mot edge ID"
                     );
