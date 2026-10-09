@@ -79,3 +79,18 @@ add_custom_command(
         "${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json"
         "$<TARGET_FILE_DIR:AttackGraph>/data/graph.json"
 )
+# CLI regression checks use the current real dataset.
+include(CTest)
+if(BUILD_TESTING)
+    add_test(NAME cli_default COMMAND AttackGraph)
+    set_tests_properties(cli_default PROPERTIES PASS_REGULAR_EXPRESSION "Cost: 28")
+    add_test(NAME cli_over_budget COMMAND AttackGraph
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json" 36 3 27)
+    set_tests_properties(cli_over_budget PROPERTIES PASS_REGULAR_EXPRESSION "OVER_BUDGET")
+    add_test(NAME cli_manual_patch COMMAND AttackGraph
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json" 36 3 30 --patch 2 6 7)
+    set_tests_properties(cli_manual_patch PROPERTIES PASS_REGULAR_EXPRESSION "Reachable: 1 -> 0")
+    add_test(NAME cli_invalid_node COMMAND AttackGraph
+        "${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json" 999 3 30)
+    set_tests_properties(cli_invalid_node PROPERTIES WILL_FAIL TRUE)
+endif()
