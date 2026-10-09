@@ -1,14 +1,18 @@
 {
   "metadata": {
-    "name": "AttackGraph from submitted draw.io",
+    "name": "AttackGraph Reduced - 18 Nodes / 24 Edges",
     "model": "Academic simulation, not native BloodHound schema",
     "source_file": "diagram_original.drawio",
     "source_sha256": "5733ea891fda512bb8b5660ff9acb732416f99cae5aa8f3b58ef1a4566146dcd",
-    "node_id_policy": "Numeric suffix of original drawio node ID; gaps retained",
-    "edge_id_policy": "1-based edge order in original XML; excluded edge 57 reserved",
+    "description": "Compact 5-layer directed attack graph for Dijkstra, BFS/DFS, token budget, Max-Flow/Min-Cut and patch tests.",
+    "node_id_policy": "Retain original numeric node IDs; IDs are not contiguous.",
+    "edge_id_policy": "Retain original numeric edge IDs; IDs are not contiguous.",
     "assets_policy": "Synthetic relative importance points: ENTRY 0, ENDPOINT 10, IDENTITY 20, CRITICAL_SYSTEM 50, TARGET 100; not money, not attack weight",
-    "capacity_policy": "null: defense capacity policy not supplied, never copied from weight",
-    "assumptions": "Missing HasSession W=10; unlabeled User->Group MemberOf W=0; 2 detached connectors restored by unique endpoint coordinates; undefined self-loop 57 quarantined",
+    "capacity_policy": "Synthetic defense patch cost by relation: MemberOf=1, HasSession=2, AccessTo=3, AdminTo=5; independent from attack weight",
+    "weight_policy": "Original edge weights retained; Dijkstra attack cost is sum of weights.",
+    "blocked_policy": "False means edge is traversable; true means patched/blocked.",
+    "source_target_test_policy": "Recommended entry source id=36 (PC_LeTan); targets id=1,2,3,13.",
+    "assumptions": "Subset of original valid nodes/edges, with no new or synthetic connections. All 4 targets remain reachable from PC_LeTan.",
     "names_policy": "Original node names retained, including Sever spelling"
   },
   "nodes": [
@@ -37,12 +41,6 @@
       "assets": 50
     },
     {
-      "id": 5,
-      "name": "Sever_Admin",
-      "type": "CRITICAL_SYSTEM",
-      "assets": 50
-    },
-    {
       "id": 6,
       "name": "Server_File",
       "type": "CRITICAL_SYSTEM",
@@ -57,18 +55,6 @@
     {
       "id": 9,
       "name": "Server_DB",
-      "type": "CRITICAL_SYSTEM",
-      "assets": 50
-    },
-    {
-      "id": 10,
-      "name": "Server_Management",
-      "type": "CRITICAL_SYSTEM",
-      "assets": 50
-    },
-    {
-      "id": 12,
-      "name": "Server_Web",
       "type": "CRITICAL_SYSTEM",
       "assets": 50
     },
@@ -91,38 +77,8 @@
       "assets": 20
     },
     {
-      "id": 16,
-      "name": "User_KeToan",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 17,
-      "name": "User_HR02",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 18,
-      "name": "User_AdminIT",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 19,
-      "name": "User_Dev02",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
       "id": 20,
       "name": "UserLeadDev",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 21,
-      "name": "User_IT02",
       "type": "IDENTITY",
       "assets": 20
     },
@@ -151,32 +107,8 @@
       "assets": 10
     },
     {
-      "id": 27,
-      "name": "PC_KeToan2",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
       "id": 28,
       "name": "PC_KeToan1",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
-      "id": 29,
-      "name": "PC_HR2",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
-      "id": 30,
-      "name": "PC_IT1",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
-      "id": 31,
-      "name": "PC_Dev2",
       "type": "ENDPOINT",
       "assets": 10
     },
@@ -187,44 +119,8 @@
       "assets": 10
     },
     {
-      "id": 33,
-      "name": "PC_IT2",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
-      "id": 34,
-      "name": "PC_Dev3",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
-      "id": 35,
-      "name": "PC_Admin1",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
       "id": 36,
       "name": "PC_LeTan",
-      "type": "ENTRY",
-      "assets": 0
-    },
-    {
-      "id": 37,
-      "name": "Guest_Device",
-      "type": "ENTRY",
-      "assets": 0
-    },
-    {
-      "id": 38,
-      "name": "Wifi_Guest",
-      "type": "ENTRY",
-      "assets": 0
-    },
-    {
-      "id": 39,
-      "name": "PC_Reception2",
       "type": "ENTRY",
       "assets": 0
     }
@@ -236,7 +132,7 @@
       "weight": 5,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 4
     },
     {
@@ -245,17 +141,8 @@
       "weight": 6,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 4
-    },
-    {
-      "id": 3,
-      "to": 2,
-      "weight": 5,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 5
     },
     {
       "id": 4,
@@ -263,7 +150,7 @@
       "weight": 6,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 6
     },
     {
@@ -272,7 +159,7 @@
       "weight": 9,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 7
     },
     {
@@ -281,7 +168,7 @@
       "weight": 5,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 7
     },
     {
@@ -290,7 +177,7 @@
       "weight": 6,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 9
     },
     {
@@ -299,26 +186,8 @@
       "weight": 8,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 9
-    },
-    {
-      "id": 9,
-      "to": 1,
-      "weight": 8,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 10
-    },
-    {
-      "id": 10,
-      "to": 3,
-      "weight": 7,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 12
     },
     {
       "id": 11,
@@ -326,7 +195,7 @@
       "weight": 0,
       "relation": "MemberOf",
       "blocked": false,
-      "capacity": null,
+      "capacity": 1,
       "from": 14
     },
     {
@@ -335,7 +204,7 @@
       "weight": 4,
       "relation": "AdminTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 5,
       "from": 14
     },
     {
@@ -344,7 +213,7 @@
       "weight": 0,
       "relation": "MemberOf",
       "blocked": false,
-      "capacity": null,
+      "capacity": 1,
       "from": 15
     },
     {
@@ -353,7 +222,7 @@
       "weight": 3,
       "relation": "AdminTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 5,
       "from": 15
     },
     {
@@ -362,89 +231,8 @@
       "weight": 6,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 15
-    },
-    {
-      "id": 16,
-      "to": 25,
-      "weight": 0,
-      "relation": "MemberOf",
-      "blocked": false,
-      "capacity": null,
-      "from": 16
-    },
-    {
-      "id": 17,
-      "to": 9,
-      "weight": 7,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 16
-    },
-    {
-      "id": 18,
-      "to": 22,
-      "weight": 0,
-      "relation": "MemberOf",
-      "blocked": false,
-      "capacity": null,
-      "from": 17
-    },
-    {
-      "id": 19,
-      "to": 6,
-      "weight": 7,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 17
-    },
-    {
-      "id": 20,
-      "to": 5,
-      "weight": 2,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 18
-    },
-    {
-      "id": 21,
-      "to": 10,
-      "weight": 2,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 18
-    },
-    {
-      "id": 22,
-      "to": 24,
-      "weight": 0,
-      "relation": "MemberOf",
-      "blocked": false,
-      "capacity": null,
-      "from": 18
-    },
-    {
-      "id": 23,
-      "to": 12,
-      "weight": 7,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 19
-    },
-    {
-      "id": 24,
-      "to": 24,
-      "weight": 0,
-      "relation": "MemberOf",
-      "blocked": false,
-      "capacity": null,
-      "from": 19
     },
     {
       "id": 25,
@@ -452,7 +240,7 @@
       "weight": 3,
       "relation": "AdminTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 5,
       "from": 20
     },
     {
@@ -461,7 +249,7 @@
       "weight": 8,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 20
     },
     {
@@ -470,35 +258,8 @@
       "weight": 0,
       "relation": "MemberOf",
       "blocked": false,
-      "capacity": null,
+      "capacity": 1,
       "from": 20
-    },
-    {
-      "id": 28,
-      "to": 10,
-      "weight": 3,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 21
-    },
-    {
-      "id": 29,
-      "to": 5,
-      "weight": 5,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 21
-    },
-    {
-      "id": 30,
-      "to": 24,
-      "weight": 0,
-      "relation": "MemberOf",
-      "blocked": false,
-      "capacity": null,
-      "from": 21
     },
     {
       "id": 31,
@@ -506,35 +267,8 @@
       "weight": 8,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 22
-    },
-    {
-      "id": 32,
-      "to": 5,
-      "weight": 2,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 24
-    },
-    {
-      "id": 33,
-      "to": 10,
-      "weight": 2,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 24
-    },
-    {
-      "id": 34,
-      "to": 12,
-      "weight": 4,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 24
     },
     {
       "id": 35,
@@ -542,7 +276,7 @@
       "weight": 6,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 24
     },
     {
@@ -551,7 +285,7 @@
       "weight": 8,
       "relation": "AccessTo",
       "blocked": false,
-      "capacity": null,
+      "capacity": 3,
       "from": 25
     },
     {
@@ -560,7 +294,7 @@
       "weight": 10,
       "relation": "HasSession",
       "blocked": false,
-      "capacity": null,
+      "capacity": 2,
       "from": 26
     },
     {
@@ -569,44 +303,8 @@
       "weight": 10,
       "relation": "HasSession",
       "blocked": false,
-      "capacity": null,
+      "capacity": 2,
       "from": 28
-    },
-    {
-      "id": 39,
-      "to": 16,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": null,
-      "from": 27
-    },
-    {
-      "id": 40,
-      "to": 17,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": null,
-      "from": 29
-    },
-    {
-      "id": 41,
-      "to": 18,
-      "weight": 2,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 30
-    },
-    {
-      "id": 42,
-      "to": 19,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": null,
-      "from": 31
     },
     {
       "id": 43,
@@ -614,35 +312,8 @@
       "weight": 10,
       "relation": "HasSession",
       "blocked": false,
-      "capacity": null,
+      "capacity": 2,
       "from": 32
-    },
-    {
-      "id": 44,
-      "to": 21,
-      "weight": 2,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 33
-    },
-    {
-      "id": 45,
-      "to": 19,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": null,
-      "from": 34
-    },
-    {
-      "id": 46,
-      "to": 18,
-      "weight": 4,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 35
     },
     {
       "id": 47,
@@ -650,7 +321,7 @@
       "weight": 10,
       "relation": "HasSession",
       "blocked": false,
-      "capacity": null,
+      "capacity": 2,
       "from": 36
     },
     {
@@ -659,7 +330,7 @@
       "weight": 10,
       "relation": "HasSession",
       "blocked": false,
-      "capacity": null,
+      "capacity": 2,
       "from": 36
     },
     {
@@ -668,71 +339,8 @@
       "weight": 10,
       "relation": "HasSession",
       "blocked": false,
-      "capacity": null,
+      "capacity": 2,
       "from": 36
-    },
-    {
-      "id": 50,
-      "to": 30,
-      "weight": 2,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 37
-    },
-    {
-      "id": 51,
-      "to": 35,
-      "weight": 4,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 37
-    },
-    {
-      "id": 52,
-      "to": 29,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": null,
-      "from": 38
-    },
-    {
-      "id": 53,
-      "to": 27,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": null,
-      "from": 38
-    },
-    {
-      "id": 54,
-      "to": 33,
-      "weight": 2,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": null,
-      "from": 38
-    },
-    {
-      "id": 55,
-      "to": 31,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": null,
-      "from": 39
-    },
-    {
-      "id": 56,
-      "to": 34,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": null,
-      "from": 39
     }
   ]
 }

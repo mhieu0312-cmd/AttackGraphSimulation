@@ -78,9 +78,9 @@ int main(int argc, char* argv[]) {
         string filename = string(PROJECT_ROOT) + "/data/graph.json";
 
         // Sửa source thành 37, target thành 1 (thay vì 0 và 37)
-        int source = 37;
-        int target = 1;
-        int64_t budget = 15;
+        int source = 36;  // PC_LeTan
+        int target = 3;   // CustomerDB
+        int64_t budget = 30;
 
         optional<vector<int>> manual;
         // =========================
