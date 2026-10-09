@@ -17,6 +17,7 @@ add_library(attackgraph_core
         src/Graph.cpp
         src/LoadDataset.cpp
         src/Dijkstra.cpp
+        src/MinCut.cpp
         src/Defender.cpp
         src/Simulation.cpp
 )
@@ -103,5 +104,15 @@ if(BUILD_TESTING)
         DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json")
     foreach(group dataset direct_errors json_errors warnings dfs)
         add_test(NAME graph_${group} COMMAND graph_validation_dfs_tests ${group})
+    endforeach()
+endif()
+
+if(BUILD_TESTING)
+    add_executable(mincut_tests tests/mincut_tests.cpp)
+    target_link_libraries(mincut_tests PRIVATE attackgraph_core)
+    target_compile_definitions(mincut_tests PRIVATE
+        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json")
+    foreach(group single multiple parallel cycles zero blocked invalid disconnected large reverse dataset exhaustive)
+        add_test(NAME mincut_${group} COMMAND mincut_tests ${group})
     endforeach()
 endif()
