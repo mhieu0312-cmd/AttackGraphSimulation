@@ -1,6 +1,8 @@
 #include "LoadDataset.h"
 #include "Simulation.h"
 
+#include <filesystem>
+#include <fstream>
 #include <iostream>
 #include <limits>
 #include <optional>
@@ -11,6 +13,22 @@
 using namespace std;
 
 namespace {
+
+// Prefer the dataset copied beside the executable; retain source-tree fallback.
+string defaultDataset(const char* executable) {
+    namespace fs = std::filesystem;
+    const vector<fs::path> candidates = {
+        fs::absolute(executable).parent_path() / "data/graph.json",
+        fs::path("data/graph.json"),
+        fs::path(PROJECT_ROOT) / "data/graph.json"
+    };
+    for (const auto& candidate : candidates) {
+        if (ifstream(candidate).good()) {
+            return candidate.string();
+        }
+    }
+    throw runtime_error("Khong tim thay data/graph.json. Hay build lai hoac truyen duong dan dataset.");
+}
 
 // Chuyen tham so thanh so nguyen khong am
 int64_t number(const char* text) {
@@ -75,9 +93,9 @@ int main(int argc, char* argv[]) {
         // CAU HINH MAC DINH
         // =========================
 
-        string filename = string(PROJECT_ROOT) + "/data/graph.json";
+        string filename;
 
-        // Sửa source thành 37, target thành 1 (thay vì 0 và 37)
+        // Dataset mac dinh: PC_LeTan -> CustomerDB
         int source = 36;  // PC_LeTan
         int target = 3;   // CustomerDB
         int64_t budget = 30;
@@ -92,7 +110,7 @@ int main(int argc, char* argv[]) {
         }
         // Thêm xử lý cho cờ --demo
         if (argc == 2 && string(argv[1]) == "--demo") {
-            // Giữ nguyên giá trị mặc định (37 -> 1, budget 15) để chạy demo
+            // Dung dataset that voi source 36, target 3, budget 30
         }
         // =========================
         // THAM SO TU NGUOI DUNG
@@ -134,6 +152,9 @@ int main(int argc, char* argv[]) {
         // LOAD DATASET
         // =========================
 
+        if (filename.empty()) {
+            filename = defaultDataset(argv[0]);
+        }
         Graph graph = loadDataset(filename);
 
         auto stats = graph.statistics();
