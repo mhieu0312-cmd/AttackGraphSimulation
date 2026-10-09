@@ -1,11 +1,7 @@
 #include "Simulation.h"
 
-using namespace std;
-
-
-// =========================
-// CHAY MO PHONG
-// =========================
+#include <stdexcept>
+#include <unordered_set>
 
 SimulationResult runSimulation(
     Graph& graph,
@@ -14,116 +10,54 @@ SimulationResult runSimulation(
     int64_t budget,
     optional<vector<int>> manualPatch
 ) {
-
     SimulationResult result;
-
     Defender defender(graph);
 
-
-    // =========================
-    // TRUOC KHI PHONG THU
-    // =========================
-
-    // Hacker tan cong lan dau
-    result.before =
-        hackerSimulation(
-            graph,
-            source,
-            target,
-            budget
-        );
-
-    // Kiem tra S -> T con ket noi khong
-    result.reachableBefore =
-        defender.isReachable(
-            source,
-            target
-        );
-
-
-    // =========================
-    // CHON EDGE CAN PATCH
-    // =========================
-
-    // Patch thu cong
+    // Validate the complete manual request before any edge can be changed.
     if (manualPatch) {
-
-        result.patchedEdgeIds =
-            *manualPatch;
-
-        result.defenseMessage =
-            "Patch thu cong theo edge ID.";
-    }
-
-    // S va T da mat ket noi
-    else if (!result.reachableBefore) {
-
-        result.defenseMessage =
-            "S-T da mat ket noi, khong can patch.";
-    }
-
-    // Source va target la cung mot node
-    else if (source == target) {
-
-        result.defenseMessage =
-            "Source va target la cung mot node.";
-    }
-
-    // Tu dong tim edge can block
-    else {
-
-        int edgeId =
-            defender.suggestCutEdge(
-                source,
-                target
-            );
-
-        if (edgeId >= 0) {
-
-            result.patchedEdgeIds.push_back(
-                edgeId
-            );
-
-            result.defenseMessage =
-                "Tim thay edge co the ngat ket noi S-T.";
-        }
-        else {
-
-            result.defenseMessage =
-                "Khong co mot edge don le nao ngat duoc S-T.";
+        for (int id : *manualPatch) {
+            if (!graph.getEdge(id)) {
+                throw invalid_argument("Patch: khong co edge ID " + to_string(id));
+            }
         }
     }
 
+    result.before = hackerSimulation(graph, source, target, budget);
+    result.reachableBefore = defender.isReachable(source, target);
 
-    // =========================
-    // PATCH EDGE
-    // =========================
+    if (!result.reachableBefore) {
+        result.defenseMessage = "S-T da mat ket noi, khong can patch.";
+    } else if (source == target) {
+        result.defenseMessage = "Source va target la cung mot node; khong tinh Min-Cut va khong patch.";
+    } else if (manualPatch) {
+        // Report each newly blocked edge once, retaining request order.
+        unordered_set<int> selected;
+        for (int id : *manualPatch) {
+            if (!graph.isBlocked(id) && selected.insert(id).second) {
+                result.patchedEdgeIds.push_back(id);
+            }
+        }
+        result.defenseMessage = "Patch thu cong theo edge ID.";
+    } else {
+        result.minCut = minimumSTCut(graph, source, target);
+        result.patchedEdgeIds = result.minCut->edgeIds;
+        result.defenseMessage = "Auto Patch toan bo tap Minimum S-T Cut theo capacity.";
+    }
 
-    graph.blockEdges(
-        result.patchedEdgeIds
-    );
+    // Preflight also covers IDs returned by the auto-defense module.
+    for (int id : result.patchedEdgeIds) {
+        if (!graph.getEdge(id)) {
+            throw invalid_argument("Patch: khong co edge ID " + to_string(id));
+        }
+    }
+    graph.blockEdges(result.patchedEdgeIds);
+    result.newlyBlockedEdges = result.patchedEdgeIds.size();
 
-
-    // =========================
-    // SAU KHI PHONG THU
-    // =========================
-
-    // Hacker tan cong lai voi budget ban dau
-    result.after =
-        hackerSimulation(
-            graph,
-            source,
-            target,
-            budget
-        );
-
-    // Kiem tra lai ket noi
-    result.reachableAfter =
-        defender.isReachable(
-            source,
-            target
-        );
-
-
+    // Independent attack attempts receive the same initial token budget.
+    result.after = hackerSimulation(graph, source, target, budget);
+    result.reachableAfter = defender.isReachable(source, target);
+    if (result.minCut && result.reachableAfter) {
+        throw logic_error("Auto Patch: tap Min-Cut khong ngat duoc S-T");
+    }
     return result;
 }

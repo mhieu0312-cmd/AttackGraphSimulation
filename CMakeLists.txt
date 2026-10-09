@@ -116,3 +116,13 @@ if(BUILD_TESTING)
         add_test(NAME mincut_${group} COMMAND mincut_tests ${group})
     endforeach()
 endif()
+
+if(BUILD_TESTING)
+    add_executable(simulation_tests tests/simulation_tests.cpp)
+    target_link_libraries(simulation_tests PRIVATE attackgraph_core)
+    target_compile_definitions(simulation_tests PRIVATE
+        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json")
+    foreach(group auto_multiple auto_single disconnected same_node manual budget atomic independent unchanged zero)
+        add_test(NAME simulation_${group} COMMAND simulation_tests ${group})
+    endforeach()
+endif()

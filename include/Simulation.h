@@ -2,6 +2,7 @@
 
 #include "Defender.h"
 #include "Dijkstra.h"
+#include "MinCut.h"
 
 #include <cstdint>
 #include <optional>
@@ -30,6 +31,10 @@ struct SimulationResult {
 
     // Thong bao ket qua phong thu
     string defenseMessage;
+
+    // Chi co gia tri khi Auto Defense da tinh Min-Cut.
+    optional<MinCutResult> minCut;
+    size_t newlyBlockedEdges = 0;
 };
 
 
@@ -37,7 +42,8 @@ struct SimulationResult {
 // CHAY MO PHONG
 // =========================
 
-// Chay Attack -> Defense -> Attack lai
+// Chay Attack -> Defense -> Attack lai. Graph truyen vao giu cac canh da patch.
+// Moi scenario doc lap phai copy graph ban dau hoac load lai dataset.
 SimulationResult runSimulation(
     Graph& graph,
     int source,
