@@ -1,0 +1,67 @@
+{
+  "metadata": {
+    "kind": "TEST_FIXTURE_NOT_REAL_DATASET",
+    "source": "reference/original/player2-hackerteam/p2_hacker_dijkstra.cpp",
+    "note": "Node IDs, directions and attack weights copied unchanged. Edge IDs 0..3, node types, assets=0 and relation labels are fixture-only additions. No capacity policy assumed."
+  },
+  "nodes": [
+    {
+      "id": 0,
+      "name": "Entry",
+      "type": "ENTRY",
+      "assets": 0
+    },
+    {
+      "id": 1,
+      "name": "PC",
+      "type": "ENDPOINT",
+      "assets": 0
+    },
+    {
+      "id": 2,
+      "name": "Admin",
+      "type": "IDENTITY",
+      "assets": 0
+    },
+    {
+      "id": 3,
+      "name": "Target",
+      "type": "TARGET",
+      "assets": 0
+    }
+  ],
+  "edges": [
+    {
+      "id": 0,
+      "from": 0,
+      "to": 1,
+      "weight": 4,
+      "relation": "AccessTo",
+      "blocked": false
+    },
+    {
+      "id": 1,
+      "from": 1,
+      "to": 2,
+      "weight": 5,
+      "relation": "AccessTo",
+      "blocked": false
+    },
+    {
+      "id": 2,
+      "from": 2,
+      "to": 3,
+      "weight": 4,
+      "relation": "AccessTo",
+      "blocked": false
+    },
+    {
+      "id": 3,
+      "from": 1,
+      "to": 3,
+      "weight": 15,
+      "relation": "AccessTo",
+      "blocked": false
+    }
+  ]
+}

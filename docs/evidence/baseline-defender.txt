@@ -1,0 +1,23 @@
+COMMAND: /tmp/original-defender
+CWD: /workspace/scratch/b4a55936a706
+EXIT: 0
+==========================================================
+    DEMO AI DEFENDER - ATTACK GRAPH & MIN-CUT SIMULATION  
+==========================================================
+
+[BUOC 1] PENTEST: Kiem tra duong tan cong tu [Hacker (External Internet)] den [Core Database Server (TARGET)]...
+=> CANH BAO NGUY HIEM: Red Team CO THE xam nhap va chiem Quyen Core Database!
+=> Trang thai lien thong: Reachable = TRUE
+
+[BUOC 2] DEFENDER: AI dang quet ma tran do thi va tinh toan Min-Cut...
+=> DE XUAT PHONG THU OPTIMAL: Can ngat ket noi tai Canh ID [201]
+=> Giai thich: Day la chot chan chi mang giup co lap Target voi chi phi thap nhat.
+
+[BUOC 3] ACTION: Thuc hien khoi tao Chot chan (Apply Patch)...
+[BLUE TEAM] Da thuc hien PATCH: Chan thanh cong Canh ID 201
+
+[BUOC 4] RE-TEST: Kiem tra lai tinh lien thong sau khi Block...
+=> THANH CONG CHUYEN DEI: Hacker da bi ngan chan HOAN TOAN!
+=> Trang thai lien thong: Reachable = FALSE
+
+==========================================================

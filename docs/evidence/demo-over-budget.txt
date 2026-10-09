@@ -1,0 +1,39 @@
+COMMAND: /workspace/scratch/b4a55936a706/build-debug/AttackGraph AttackGraphSimulation/tests/fixtures/p2_demo.json 0 3 15 --patch 2
+CWD: /workspace/scratch/b4a55936a706
+EXIT: 0
+Dataset: AttackGraphSimulation/tests/fixtures/p2_demo.json
+Nodes=4 Edges=4 Active=4 Blocked=0
+Type ENDPOINT: 1
+Type ENTRY: 1
+Type IDENTITY: 1
+Type TARGET: 1
+Relation AccessTo: 4
+Node 0: in=0 out=1
+Node 1: in=1 out=2
+Node 2: in=1 out=1
+Node 3: in=2 out=0
+NOTE: Thieu capacity: chua the tinh weighted Min-Cut
+S=0 T=3
+
+=== BEFORE PATCH ===
+Budget khoi tao: 15
+Path: 0 -> 1 -> 2 -> 3
+Cost: 13
+Edge IDs: 0 1 2
+SUCCESS: token con lai = 2
+
+=== DEFENDER / PATCH ===
+Patch thu cong theo edge ID; khong phai ket qua Min-Cut.
+Patched IDs: 2
+
+=== AFTER PATCH ===
+Budget khoi tao: 15
+Path: 0 -> 1 -> 3
+Cost: 19
+Edge IDs: 0 3
+OVER_BUDGET: van co duong nhung vuot ngan sach.
+
+Reachable: 1 -> 1
+Blocked edges: 0 -> 1
+Edges van giu nguyen: 4
+LIMIT: Max-Flow/Minimum S-T Cut chua duoc trien khai.
