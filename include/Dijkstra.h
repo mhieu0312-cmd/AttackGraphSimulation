@@ -93,6 +93,21 @@ AttackResult hackerSimulation(
 
 
 // =========================
+// DIEU KIEN DI CHUYEN (CAN MOVE)
+// =========================
+
+// Kiem tra hacker co the di qua mot canh cu the voi so token hien co hay khong:
+// 1. Canh phai ton tai trong do thi
+// 2. Canh chua bi Defender chan (!isBlocked)
+// 3. So token con lai phai khong am va >= weight cua canh
+bool canMove(
+    const Graph& graph,
+    int edgeId,
+    int64_t remainingToken
+);
+
+
+// =========================
 // IN KET QUA
 // =========================
 
@@ -102,6 +117,19 @@ void printPath(
 );
 
 void printAttack(
+    const AttackResult& attack,
+    ostream& out
+);
+
+// In ket qua truc quan gom ten Node va Relation giup bao cao va giai thich
+void printPathDetailed(
+    const Graph& graph,
+    const PathResult& path,
+    ostream& out
+);
+
+void printAttackDetailed(
+    const Graph& graph,
     const AttackResult& attack,
     ostream& out
 );

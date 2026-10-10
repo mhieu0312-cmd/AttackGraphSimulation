@@ -126,3 +126,14 @@ if(BUILD_TESTING)
         add_test(NAME simulation_${group} COMMAND simulation_tests ${group})
     endforeach()
 endif()
+
+if(BUILD_TESTING)
+    add_executable(hacker_tests tests/hacker_tests.cpp)
+    target_link_libraries(hacker_tests PRIVATE attackgraph_core)
+    target_compile_definitions(hacker_tests PRIVATE
+        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json")
+    foreach(group basic can_move budget edge_cases scenarios)
+        add_test(NAME hacker_${group} COMMAND hacker_tests ${group})
+    endforeach()
+endif()
+
