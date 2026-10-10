@@ -15,6 +15,7 @@ add_library(attackgraph_core
         src/Node.cpp
         src/Edge.cpp
         src/Graph.cpp
+        src/RuntimeInput.cpp
         src/LoadDataset.cpp
         src/Dijkstra.cpp
         src/MinCut.cpp
@@ -65,34 +66,20 @@ target_compile_definitions(
 )
 
 
-# =========================
-# COPY DATASET
-# =========================
-
-add_custom_command(
-        TARGET AttackGraph
-        POST_BUILD
-
-        COMMAND ${CMAKE_COMMAND} -E make_directory
-        "$<TARGET_FILE_DIR:AttackGraph>/data"
-
-        COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json"
-        "$<TARGET_FILE_DIR:AttackGraph>/data/graph.json"
-)
-# CLI regression checks use the current real dataset.
+# Tests use immutable fixtures, never user data.
 include(CTest)
 if(BUILD_TESTING)
-    add_test(NAME cli_default COMMAND AttackGraph)
+    add_test(NAME cli_default COMMAND AttackGraph
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/company_original.json" 36 3 30)
     set_tests_properties(cli_default PROPERTIES PASS_REGULAR_EXPRESSION "Cost: 28")
     add_test(NAME cli_over_budget COMMAND AttackGraph
-        "${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json" 36 3 27)
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/company_original.json" 36 3 27)
     set_tests_properties(cli_over_budget PROPERTIES PASS_REGULAR_EXPRESSION "OVER_BUDGET")
     add_test(NAME cli_manual_patch COMMAND AttackGraph
-        "${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json" 36 3 30 --patch 2 6 7)
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/company_original.json" 36 3 30 --patch 2 6 7)
     set_tests_properties(cli_manual_patch PROPERTIES PASS_REGULAR_EXPRESSION "Reachable: 1 -> 0")
     add_test(NAME cli_invalid_node COMMAND AttackGraph
-        "${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json" 999 3 30)
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/company_original.json" 999 3 30)
     set_tests_properties(cli_invalid_node PROPERTIES WILL_FAIL TRUE)
 endif()
 
@@ -101,7 +88,7 @@ if(BUILD_TESTING)
     target_link_libraries(graph_validation_dfs_tests PRIVATE attackgraph_core)
     target_include_directories(graph_validation_dfs_tests SYSTEM PRIVATE third_party)
     target_compile_definitions(graph_validation_dfs_tests PRIVATE
-        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json")
+        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/company_original.json")
     foreach(group dataset direct_errors json_errors warnings dfs)
         add_test(NAME graph_${group} COMMAND graph_validation_dfs_tests ${group})
     endforeach()
@@ -111,7 +98,7 @@ if(BUILD_TESTING)
     add_executable(mincut_tests tests/mincut_tests.cpp)
     target_link_libraries(mincut_tests PRIVATE attackgraph_core)
     target_compile_definitions(mincut_tests PRIVATE
-        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json")
+        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/company_original.json")
     foreach(group single multiple parallel cycles zero blocked invalid disconnected large reverse dataset exhaustive)
         add_test(NAME mincut_${group} COMMAND mincut_tests ${group})
     endforeach()
@@ -121,7 +108,7 @@ if(BUILD_TESTING)
     add_executable(simulation_tests tests/simulation_tests.cpp)
     target_link_libraries(simulation_tests PRIVATE attackgraph_core)
     target_compile_definitions(simulation_tests PRIVATE
-        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json")
+        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/company_original.json")
     foreach(group auto_multiple auto_single disconnected same_node manual budget atomic independent unchanged zero)
         add_test(NAME simulation_${group} COMMAND simulation_tests ${group})
     endforeach()
@@ -131,9 +118,19 @@ if(BUILD_TESTING)
     add_executable(hacker_tests tests/hacker_tests.cpp)
     target_link_libraries(hacker_tests PRIVATE attackgraph_core)
     target_compile_definitions(hacker_tests PRIVATE
-        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/data/graph.json")
+        DATASET_PATH="${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures/company_original.json")
     foreach(group basic can_move budget edge_cases scenarios)
         add_test(NAME hacker_${group} COMMAND hacker_tests ${group})
     endforeach()
 endif()
 
+
+if(BUILD_TESTING)
+    add_executable(runtime_input_tests tests/runtime_input_tests.cpp)
+    target_link_libraries(runtime_input_tests PRIVATE attackgraph_core)
+    add_test(NAME runtime_input COMMAND runtime_input_tests)
+    find_package(Python3 COMPONENTS Interpreter REQUIRED)
+    add_test(NAME dynamic_datasets COMMAND "${Python3_EXECUTABLE}"
+        "${CMAKE_CURRENT_SOURCE_DIR}/tests/dynamic_dataset_tests.py"
+        "$<TARGET_FILE:AttackGraph>" "${CMAKE_CURRENT_SOURCE_DIR}/tests/fixtures")
+endif()

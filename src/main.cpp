@@ -1,5 +1,6 @@
 #include "LoadDataset.h"
 #include "Simulation.h"
+#include "RuntimeInput.h"
 
 #include <filesystem>
 #include <fstream>
@@ -14,70 +15,14 @@ using namespace std;
 
 namespace {
 
-// Prefer the dataset copied beside the executable; retain source-tree fallback.
-string defaultDataset(const char* executable) {
-    namespace fs = std::filesystem;
-    const vector<fs::path> candidates = {
-        fs::absolute(executable).parent_path() / "data/graph.json",
-        fs::path("data/graph.json"),
-        fs::path(PROJECT_ROOT) / "data/graph.json"
-    };
-    for (const auto& candidate : candidates) {
-        if (ifstream(candidate).good()) {
-            return candidate.string();
-        }
-    }
-    throw runtime_error("Khong tim thay data/graph.json. Hay build lai hoac truyen duong dan dataset.");
-}
-
-// Chuyen tham so thanh so nguyen khong am
-int64_t number(const char* text) {
-
-    string s(text);
-
-    if (s.empty() ||
-        s.find_first_not_of("0123456789") != string::npos) {
-
-        throw invalid_argument(
-            "Tham so phai la so nguyen khong am"
-        );
-    }
-
-    size_t end = 0;
-    int64_t value = stoll(s, &end);
-
-    if (end != s.size()) {
-        throw invalid_argument(
-            "Tham so khong hop le"
-        );
-    }
-
-    return value;
-}
-
-
-// Chuyen tham so thanh ID
-int idNumber(const char* text) {
-
-    int64_t value = number(text);
-
-    if (value > numeric_limits<int>::max()) {
-        throw invalid_argument(
-            "ID vuot mien int"
-        );
-    }
-
-    return static_cast<int>(value);
-}
-
-
 // Huong dan cach chay
 void usage() {
 
     cout
         << "Usage:\n"
         << "  AttackGraph\n"
-        << "  AttackGraph --demo\n"
+        << "  AttackGraph --demo [dataset.json] (first ENTRY/TARGET, budget 0)\n"
+        << "  AttackGraph <dataset.json> (interactive)\n"
         << "  AttackGraph <dataset> <source> <target> <budget>\n"
         << "  AttackGraph <dataset> <source> <target> <budget> "
            "--patch <edgeId...>\n";
@@ -95,88 +40,57 @@ int main(int argc, char* argv[]) {
 
         string filename;
 
-        // Dataset mac dinh: PC_LeTan -> CustomerDB
-        int source = 36;  // PC_LeTan
-        int target = 3;   // CustomerDB
-        int64_t budget = 30;
-
+        SimulationParameters parameters{0, 0, 0};
         optional<vector<int>> manual;
-        // =========================
-        // HELP
-        // =========================
+        bool interactive = true;
+        bool demo = false;
         if (argc == 2 && string(argv[1]) == "--help") {
             usage();
             return 0;
         }
-        // Thêm xử lý cho cờ --demo
-        if (argc == 2 && string(argv[1]) == "--demo") {
-            // Dung dataset that voi source 36, target 3, budget 30
-        }
-        // =========================
-        // THAM SO TU NGUOI DUNG
-        // =========================
-        else if (argc > 1) {
-
-            if (argc < 5) {
-                usage();
-                return 1;
-            }
-
+        if (argc >= 2 && string(argv[1]) == "--demo") {
+            if (argc > 3) throw invalid_argument("Usage: AttackGraph --demo [dataset.json]");
+            demo = true;
+            interactive = false;
+            if (argc == 3) filename = argv[2];
+        } else if (argc == 2) {
             filename = argv[1];
-
-            source = idNumber(argv[2]);
-            target = idNumber(argv[3]);
-            budget = number(argv[4]);
-
-            // Patch thu cong
+        } else if (argc > 1) {
+            if (argc < 5) { usage(); return 1; }
+            filename = argv[1];
+            parameters = {parseNodeId(argv[2]), parseNodeId(argv[3]), parseNonnegative(argv[4])};
+            interactive = false;
             if (argc > 5) {
-
-                if (string(argv[5]) != "--patch" || argc == 6) {
-                    throw invalid_argument(
-                        "Can --patch va it nhat mot edge ID"
-                    );
-                }
-
+                if (string(argv[5]) != "--patch" || argc == 6)
+                    throw invalid_argument("Can --patch va it nhat mot edge ID");
                 manual = vector<int>{};
-
-                for (int i = 6; i < argc; ++i) {
-                    manual->push_back(
-                        idNumber(argv[i])
-                    );
-                }
+                for (int i=6; i<argc; ++i) manual->push_back(parseNodeId(argv[i]));
             }
         }
-
 
         // =========================
         // LOAD DATASET
         // =========================
 
-        if (filename.empty()) {
-            filename = defaultDataset(argv[0]);
-        }
+        filename = resolveDatasetPath(filename, argv[0], PROJECT_ROOT).string();
+        cout << "File: " << filename << '\n';
         Graph graph = loadDataset(filename);
+        for (const auto& warning : graph.validationWarnings()) cout << "Warning: " << warning << '\n';
+        if (interactive) parameters = selectParameters(graph, cin, cout);
+        else if (demo) parameters = demoParameters(graph);
+        validateParameters(graph, parameters);
+        const int source = parameters.source;
+        const int target = parameters.target;
+        const int64_t budget = parameters.budget;
 
         auto stats = graph.statistics();
 
         cout << "\n=== DATASET ===\n";
-        cout << "File: " << filename << '\n';
         cout << "Nodes: " << stats.nodes << '\n';
         cout << "Edges: " << stats.edges << '\n';
         cout << "Source: " << source << '\n';
         cout << "Target: " << target << '\n';
         cout << "Budget: " << budget << '\n';
-
-
-        // Kiem tra dataset
-        for (const auto& warning :
-             graph.validationWarnings()) {
-
-            cout
-                << "Warning: "
-                << warning
-                << '\n';
-        }
 
 
         // =========================

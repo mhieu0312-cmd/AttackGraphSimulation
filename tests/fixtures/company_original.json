@@ -1,0 +1,346 @@
+{
+  "metadata": {
+    "name": "AttackGraph Reduced - 18 Nodes / 24 Edges",
+    "model": "Academic simulation, not native BloodHound schema",
+    "source_file": "diagram_original.drawio",
+    "source_sha256": "5733ea891fda512bb8b5660ff9acb732416f99cae5aa8f3b58ef1a4566146dcd",
+    "description": "Compact 5-layer directed attack graph for Dijkstra, BFS/DFS, token budget, Max-Flow/Min-Cut and patch tests.",
+    "node_id_policy": "Retain original numeric node IDs; IDs are not contiguous.",
+    "edge_id_policy": "Retain original numeric edge IDs; IDs are not contiguous.",
+    "assets_policy": "Synthetic relative importance points: ENTRY 0, ENDPOINT 10, IDENTITY 20, CRITICAL_SYSTEM 50, TARGET 100; not money, not attack weight",
+    "capacity_policy": "Synthetic defense patch cost by relation: MemberOf=1, HasSession=2, AccessTo=3, AdminTo=5; independent from attack weight",
+    "weight_policy": "Original edge weights retained; Dijkstra attack cost is sum of weights.",
+    "blocked_policy": "False means edge is traversable; true means patched/blocked.",
+    "source_target_test_policy": "Recommended entry source id=36 (PC_LeTan); targets id=1,2,3,13.",
+    "assumptions": "Subset of original valid nodes/edges, with no new or synthetic connections. All 4 targets remain reachable from PC_LeTan.",
+    "names_policy": "Original node names retained, including Sever spelling"
+  },
+  "nodes": [
+    {
+      "id": 1,
+      "name": "SeverDC",
+      "type": "TARGET",
+      "assets": 100
+    },
+    {
+      "id": 2,
+      "name": "AdminDB",
+      "type": "TARGET",
+      "assets": 100
+    },
+    {
+      "id": 3,
+      "name": "CustomerDB",
+      "type": "TARGET",
+      "assets": 100
+    },
+    {
+      "id": 4,
+      "name": "Sever_Internal",
+      "type": "CRITICAL_SYSTEM",
+      "assets": 50
+    },
+    {
+      "id": 6,
+      "name": "Server_File",
+      "type": "CRITICAL_SYSTEM",
+      "assets": 50
+    },
+    {
+      "id": 7,
+      "name": "Server_App",
+      "type": "CRITICAL_SYSTEM",
+      "assets": 50
+    },
+    {
+      "id": 9,
+      "name": "Server_DB",
+      "type": "CRITICAL_SYSTEM",
+      "assets": 50
+    },
+    {
+      "id": 13,
+      "name": "BackupServer",
+      "type": "TARGET",
+      "assets": 100
+    },
+    {
+      "id": 14,
+      "name": "User_LienHR",
+      "type": "IDENTITY",
+      "assets": 20
+    },
+    {
+      "id": 15,
+      "name": "User_KeToanTruong",
+      "type": "IDENTITY",
+      "assets": 20
+    },
+    {
+      "id": 20,
+      "name": "UserLeadDev",
+      "type": "IDENTITY",
+      "assets": 20
+    },
+    {
+      "id": 22,
+      "name": "Group_HR",
+      "type": "IDENTITY",
+      "assets": 20
+    },
+    {
+      "id": 24,
+      "name": "Group_IT",
+      "type": "IDENTITY",
+      "assets": 20
+    },
+    {
+      "id": 25,
+      "name": "GroupKeToan",
+      "type": "IDENTITY",
+      "assets": 20
+    },
+    {
+      "id": 26,
+      "name": "PC_HR1",
+      "type": "ENDPOINT",
+      "assets": 10
+    },
+    {
+      "id": 28,
+      "name": "PC_KeToan1",
+      "type": "ENDPOINT",
+      "assets": 10
+    },
+    {
+      "id": 32,
+      "name": "PC_Dev1",
+      "type": "ENDPOINT",
+      "assets": 10
+    },
+    {
+      "id": 36,
+      "name": "PC_LeTan",
+      "type": "ENTRY",
+      "assets": 0
+    }
+  ],
+  "edges": [
+    {
+      "id": 1,
+      "to": 1,
+      "weight": 5,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 4
+    },
+    {
+      "id": 2,
+      "to": 3,
+      "weight": 6,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 4
+    },
+    {
+      "id": 4,
+      "to": 13,
+      "weight": 6,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 6
+    },
+    {
+      "id": 5,
+      "to": 2,
+      "weight": 9,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 7
+    },
+    {
+      "id": 6,
+      "to": 3,
+      "weight": 5,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 7
+    },
+    {
+      "id": 7,
+      "to": 3,
+      "weight": 6,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 9
+    },
+    {
+      "id": 8,
+      "to": 2,
+      "weight": 8,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 9
+    },
+    {
+      "id": 11,
+      "to": 22,
+      "weight": 0,
+      "relation": "MemberOf",
+      "blocked": false,
+      "capacity": 1,
+      "from": 14
+    },
+    {
+      "id": 12,
+      "to": 4,
+      "weight": 4,
+      "relation": "AdminTo",
+      "blocked": false,
+      "capacity": 5,
+      "from": 14
+    },
+    {
+      "id": 13,
+      "to": 25,
+      "weight": 0,
+      "relation": "MemberOf",
+      "blocked": false,
+      "capacity": 1,
+      "from": 15
+    },
+    {
+      "id": 14,
+      "to": 9,
+      "weight": 3,
+      "relation": "AdminTo",
+      "blocked": false,
+      "capacity": 5,
+      "from": 15
+    },
+    {
+      "id": 15,
+      "to": 4,
+      "weight": 6,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 15
+    },
+    {
+      "id": 25,
+      "to": 7,
+      "weight": 3,
+      "relation": "AdminTo",
+      "blocked": false,
+      "capacity": 5,
+      "from": 20
+    },
+    {
+      "id": 26,
+      "to": 6,
+      "weight": 8,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 20
+    },
+    {
+      "id": 27,
+      "to": 24,
+      "weight": 0,
+      "relation": "MemberOf",
+      "blocked": false,
+      "capacity": 1,
+      "from": 20
+    },
+    {
+      "id": 31,
+      "to": 6,
+      "weight": 8,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 22
+    },
+    {
+      "id": 35,
+      "to": 7,
+      "weight": 6,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 24
+    },
+    {
+      "id": 36,
+      "to": 9,
+      "weight": 8,
+      "relation": "AccessTo",
+      "blocked": false,
+      "capacity": 3,
+      "from": 25
+    },
+    {
+      "id": 37,
+      "to": 14,
+      "weight": 10,
+      "relation": "HasSession",
+      "blocked": false,
+      "capacity": 2,
+      "from": 26
+    },
+    {
+      "id": 38,
+      "to": 15,
+      "weight": 10,
+      "relation": "HasSession",
+      "blocked": false,
+      "capacity": 2,
+      "from": 28
+    },
+    {
+      "id": 43,
+      "to": 20,
+      "weight": 10,
+      "relation": "HasSession",
+      "blocked": false,
+      "capacity": 2,
+      "from": 32
+    },
+    {
+      "id": 47,
+      "to": 26,
+      "weight": 10,
+      "relation": "HasSession",
+      "blocked": false,
+      "capacity": 2,
+      "from": 36
+    },
+    {
+      "id": 48,
+      "to": 32,
+      "weight": 10,
+      "relation": "HasSession",
+      "blocked": false,
+      "capacity": 2,
+      "from": 36
+    },
+    {
+      "id": 49,
+      "to": 28,
+      "weight": 10,
+      "relation": "HasSession",
+      "blocked": false,
+      "capacity": 2,
+      "from": 36
+    }
+  ]
+}

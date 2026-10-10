@@ -1,6 +1,6 @@
 # Attack Graph Simulation
 
-C++17 + CMake + JSON. Dataset hiện tại có **18 node, 24 cạnh**, graph có hướng.
+C++17 + CMake + JSON. Graph có hướng; dataset được load ở runtime theo schema trong `docs/DATASET_SCHEMA.md`. Số node, cạnh, ID và tên do JSON quyết định.
 
 ## Chạy trong CLion
 
@@ -9,7 +9,9 @@ C++17 + CMake + JSON. Dataset hiện tại có **18 node, 24 cạnh**, graph có
 3. Nếu đang dùng bản cũ: **Tools → CMake → Reset Cache and Reload Project**.
 4. Chọn target **AttackGraph**, Build rồi Run; để trống Program arguments.
 
-Mặc định: `PC_LeTan (36) → CustomerDB (3)`, budget `30`. Đường rẻ nhất có cost `28`, còn `2` token.
+Chạy không tham số: chương trình load `data/graph.json`, liệt kê ENTRY, TARGET và tất cả node, rồi yêu cầu nhập Source ID, Target ID, Token Budget. Có thể chọn bất kỳ node tồn tại, kể cả ENDPOINT. Nhập sai được yêu cầu nhập lại; hết input thì báo lỗi.
+
+Trong CLion, để trống Program arguments để chọn tương tác. Hoặc nhập `<dataset.json> <source> <target> <budget> [--patch <edgeId> ...]` theo ID của dataset vừa nhập. Working directory có thể đặt là folder project; đường dẫn CLI tương đối được tính từ working directory.
 
 ## Build bằng terminal
 
@@ -25,26 +27,37 @@ Windows MinGW: `build\AttackGraph.exe`. Visual Studio: `build\Debug\AttackGraph.
 
 ```text
 AttackGraph
-AttackGraph --demo
+AttackGraph --demo [dataset.json]
+AttackGraph <dataset.json>
 AttackGraph --help
 AttackGraph <dataset.json> <source> <target> <budget> [--patch <edgeId> ...]
 ```
 
-Ví dụ trên Windows, chạy từ folder project:
+Ví dụ trên Windows:
 
 ```powershell
-.\build\AttackGraph.exe data/graph.json 36 3 30
-.\build\AttackGraph.exe data/graph.json 36 3 27
-.\build\AttackGraph.exe data/graph.json 36 3 30 --patch 2 6 7
+.\build\AttackGraph.exe
+.\build\AttackGraph.exe "D:/datasets/company.json"
+.\build\AttackGraph.exe "D:/datasets/company.json" <sourceID> <targetID> <budget>
 ```
 
-Dataset được copy vào `data/` cạnh executable khi build. Chương trình ưu tiên bản copy này, sau đó tìm ở working directory và folder source. Đường dẫn dataset truyền qua CLI được dùng đúng như nhập.
+`--demo [dataset.json]` không hỏi input: chọn ENTRY đầu tiên và TARGET đầu tiên theo thứ tự JSON, budget 0. Đây là giá trị demo cố định cho token, không phải giả định về mạng hoặc khả năng tấn công. Thiếu ENTRY/TARGET thì báo lỗi; dùng interactive hoặc CLI để chọn node khác.
+
+Thứ tự tìm file khi không truyền đường dẫn: JSON gốc tại project → `data/graph.json` cạnh executable → `graph.json` cạnh executable → `data/graph.json` trong working directory. Đường dẫn được in tuyệt đối trước khi load. File được chọn sai schema sẽ báo lỗi, không fallback sang file khác. Trong môi trường phát triển, JSON gốc luôn ưu tiên hơn bản cũ trong build.
+
+CMake không copy dataset sau build nữa. Khi đóng gói, tự đặt JSON trong `data/` cạnh `.exe` hoặc truyền đường dẫn cụ thể. Nếu chạy bản đóng gói trên máy vẫn có folder source gốc, truyền đường dẫn cụ thể để ưu tiên file đóng gói. Thay JSON và chạy lại là nhận dữ liệu mới, không rebuild. Các bản copy cũ và dataset người dùng không bị xóa.
+
+Các test thuật toán dùng fixture cố định `tests/fixtures/company_original.json` (18/24 với ID cũ), độc lập với `data/graph.json`. Fixture `company_renumbered.json` dùng kiểm tra đổi ID; test runtime tạo dataset nhỏ trong thư mục tạm. Python 3 cần cho test end-to-end (`BUILD_TESTING=ON`), không cần cho chương trình; build chỉ executable bằng `-DBUILD_TESTING=OFF`.
+
+## Schema runtime hiện tại
+
+JSON có `nodes` và `edges` là array. Mỗi node cần `id`, `name`, `type`, `assets`; mỗi edge cần `id`, `from`, `to`, `weight`, `capacity`, `relation`, và có thể có `blocked` (mặc định false). ID và weight/capacity là số nguyên không âm trong miền `int`, ID duy nhất, endpoint phải tồn tại. Node type: ENTRY, ENDPOINT, IDENTITY, CRITICAL_SYSTEM, TARGET. Relation: HasSession, AdminTo, MemberOf, AccessTo. Name không được rỗng/chỉ khoảng trắng. Các thuật toán vẫn phân biệt weight (attack) và capacity (defense); assets không dùng để tính flow. Thiếu ENTRY/TARGET hoặc TARGET không reachable là warning, không tự sửa dữ liệu.
 
 ## Kết quả và giới hạn
 
 - `SUCCESS`: cost ≤ budget; `OVER_BUDGET`: có đường nhưng thiếu token; `NO_PATH`: không có đường.
 - Sau patch, attacker được cấp lại budget ban đầu. Patch đổi `blocked` trong bộ nhớ, không ghi JSON.
-- Auto Defense gọi `minimumSTCut()` rồi block toàn bộ Edge ID trong tập cut. Mặc định: Max-Flow = Min-Cut Capacity = 6, patch `47 48 49`, sau đó `NO_PATH`, reachable `1 → 0`, blocked `0 → 3`.
+- Auto Defense gọi `minimumSTCut()` rồi block toàn bộ Edge ID trong tập cut, dựa trên dataset và Source/Target được chọn.
 - Min-Cut Capacity là chi phí phòng thủ của mô hình, khác Attack Cost và Token Budget. Auto Defense vẫn chạy khi attacker ban đầu `OVER_BUDGET` nhưng S–T còn reachable.
 - `--patch` giữ chế độ thủ công; không tính Min-Cut, output flow/cut là `N/A`. Kiểm tra toàn bộ ID trước patch, bỏ qua cạnh đã blocked và ID lặp khi báo số cạnh mới chặn.
 - S–T đã mất kết nối hoặc source = target: không patch trong cả hai chế độ. Manual ID sai vẫn bị từ chối trước khi thay đổi Graph.
