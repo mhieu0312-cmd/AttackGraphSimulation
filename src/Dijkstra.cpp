@@ -252,6 +252,32 @@ AttackResult hackerSimulation(
 
 
 // =========================
+// DIEU KIEN DI CHUYEN (CAN MOVE)
+// =========================
+
+bool canMove(
+    const Graph& graph,
+    int edgeId,
+    int64_t remainingToken
+) {
+    // Token am khong the di chuyen
+    if (remainingToken < 0) {
+        return false;
+    }
+
+    const Edge* edge = graph.getEdge(edgeId);
+
+    // Canh khong ton tai hoac da bi Defender chan
+    if (edge == nullptr || edge->isBlocked()) {
+        return false;
+    }
+
+    // Token con lai phai du chi tra weight cua canh
+    return remainingToken >= edge->getWeight();
+}
+
+
+// =========================
 // IN DUONG DI
 // =========================
 
@@ -325,5 +351,82 @@ void printAttack(
 
         out << "\nOVER_BUDGET: "
                "van co duong nhung vuot ngan sach.\n";
+    }
+}
+
+
+// =========================
+// IN CHI TIET (TRUC QUAN KEM TEN NODE)
+// =========================
+
+void printPathDetailed(
+    const Graph& graph,
+    const PathResult& path,
+    ostream& out
+) {
+    if (!path.reachable || path.nodes.empty()) {
+        out << "(khong co duong di)\n";
+        return;
+    }
+
+    if (path.nodes.size() == 1) {
+        const Node* node = graph.getNode(path.nodes[0]);
+        out << "  [1] "
+            << (node ? node->getName() : ("Node " + to_string(path.nodes[0])))
+            << " (ID " << path.nodes[0] << ") [Xuat phat tai dich]\n";
+        return;
+    }
+
+    for (size_t i = 0; i < path.edgeIds.size(); ++i) {
+        int u = path.nodes[i];
+        int v = path.nodes[i + 1];
+        int edgeId = path.edgeIds[i];
+
+        const Node* uNode = graph.getNode(u);
+        const Node* vNode = graph.getNode(v);
+        const Edge* edge = graph.getEdge(edgeId);
+
+        string uName = uNode ? uNode->getName() : ("Node " + to_string(u));
+        string vName = vNode ? vNode->getName() : ("Node " + to_string(v));
+        string rel = edge ? edge->getRelation() : "Edge";
+        int64_t w = edge ? edge->getWeight() : 0;
+
+        out << "  [" << (i + 1) << "] " << uName << " (ID " << u << ")\n";
+        out << "      ---(" << rel << ", Cost: " << w << ", Edge ID: " << edgeId << ")--->\n";
+
+        if (i + 1 == path.edgeIds.size()) {
+            out << "  [" << (i + 2) << "] " << vName << " (ID " << v << ") [TARGET]\n";
+        }
+    }
+}
+
+void printAttackDetailed(
+    const Graph& graph,
+    const AttackResult& attack,
+    ostream& out
+) {
+    out << "Budget khoi tao: " << attack.initialBudget << '\n';
+
+    if (!attack.path.reachable) {
+        out << "Trang thai: NO_PATH (Khong co duong di den muc tieu)\n";
+        return;
+    }
+
+    out << "Lo trinh tan cong chi tiet:\n";
+    printPathDetailed(graph, attack.path, out);
+
+    out << "Tong chi phi: " << attack.path.totalCost << " Token\n";
+    out << "Edge IDs:";
+    for (int id : attack.path.edgeIds) {
+        out << ' ' << id;
+    }
+    out << '\n';
+
+    if (attack.status == AttackStatus::SUCCESS) {
+        out << "Ket luan: SUCCESS (Hacker tiep can muc tieu thanh cong)\n";
+        out << "Token con lai: " << *attack.remainingToken << '\n';
+    } else {
+        out << "Ket luan: OVER_BUDGET (Phat hien duong di nhung thieu "
+            << (attack.path.totalCost - attack.initialBudget) << " Token)\n";
     }
 }
