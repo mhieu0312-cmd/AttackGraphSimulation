@@ -15,332 +15,51 @@
     "assumptions": "Subset of original valid nodes/edges, with no new or synthetic connections. All 4 targets remain reachable from PC_LeTan.",
     "names_policy": "Original node names retained, including Sever spelling"
   },
+
   "nodes": [
-    {
-      "id": 1,
-      "name": "SeverDC",
-      "type": "TARGET",
-      "assets": 100
-    },
-    {
-      "id": 2,
-      "name": "AdminDB",
-      "type": "TARGET",
-      "assets": 100
-    },
-    {
-      "id": 3,
-      "name": "CustomerDB",
-      "type": "TARGET",
-      "assets": 100
-    },
-    {
-      "id": 4,
-      "name": "Sever_Internal",
-      "type": "CRITICAL_SYSTEM",
-      "assets": 50
-    },
-    {
-      "id": 6,
-      "name": "Server_File",
-      "type": "CRITICAL_SYSTEM",
-      "assets": 50
-    },
-    {
-      "id": 7,
-      "name": "Server_App",
-      "type": "CRITICAL_SYSTEM",
-      "assets": 50
-    },
-    {
-      "id": 9,
-      "name": "Server_DB",
-      "type": "CRITICAL_SYSTEM",
-      "assets": 50
-    },
-    {
-      "id": 13,
-      "name": "BackupServer",
-      "type": "TARGET",
-      "assets": 100
-    },
-    {
-      "id": 14,
-      "name": "User_LienHR",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 15,
-      "name": "User_KeToanTruong",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 20,
-      "name": "UserLeadDev",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 22,
-      "name": "Group_HR",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 24,
-      "name": "Group_IT",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 25,
-      "name": "GroupKeToan",
-      "type": "IDENTITY",
-      "assets": 20
-    },
-    {
-      "id": 26,
-      "name": "PC_HR1",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
-      "id": 28,
-      "name": "PC_KeToan1",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
-      "id": 32,
-      "name": "PC_Dev1",
-      "type": "ENDPOINT",
-      "assets": 10
-    },
-    {
-      "id": 36,
-      "name": "PC_LeTan",
-      "type": "ENTRY",
-      "assets": 0
-    }
+    {"id": 1, "name": "SeverDC", "type": "TARGET", "assets": 100},
+    {"id": 2, "name": "AdminDB", "type": "TARGET", "assets": 100},
+    {"id": 3, "name": "CustomerDB", "type": "TARGET", "assets": 100},
+    {"id": 4, "name": "Sever_Internal", "type": "CRITICAL_SYSTEM", "assets": 50},
+    {"id": 5, "name": "Server_File", "type": "CRITICAL_SYSTEM", "assets": 50},
+    {"id": 6, "name": "Server_App", "type": "CRITICAL_SYSTEM", "assets": 50},
+    {"id": 7, "name": "Server_DB", "type": "CRITICAL_SYSTEM", "assets": 50},
+    {"id": 8, "name": "BackupServer", "type": "TARGET", "assets": 100},
+    {"id": 9, "name": "User_LienHR", "type": "IDENTITY", "assets": 20},
+    {"id": 10, "name": "User_KeToanTruong", "type": "IDENTITY", "assets": 20},
+    {"id": 11, "name": "UserLeadDev", "type": "IDENTITY", "assets": 20},
+    {"id": 12, "name": "Group_HR", "type": "IDENTITY", "assets": 20},
+    {"id": 13, "name": "Group_IT", "type": "IDENTITY", "assets": 20},
+    {"id": 14, "name": "GroupKeToan", "type": "IDENTITY", "assets": 20},
+    {"id": 15, "name": "PC_HR1", "type": "ENDPOINT", "assets": 10},
+    {"id": 16, "name": "PC_KeToan1", "type": "ENDPOINT", "assets": 10},
+    {"id": 17, "name": "PC_Dev1", "type": "ENDPOINT", "assets": 10},
+    {"id": 18, "name": "PC_LeTan", "type": "ENTRY", "assets": 0}
   ],
   "edges": [
-    {
-      "id": 1,
-      "to": 1,
-      "weight": 5,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 4
-    },
-    {
-      "id": 2,
-      "to": 3,
-      "weight": 6,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 4
-    },
-    {
-      "id": 4,
-      "to": 13,
-      "weight": 6,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 6
-    },
-    {
-      "id": 5,
-      "to": 2,
-      "weight": 9,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 7
-    },
-    {
-      "id": 6,
-      "to": 3,
-      "weight": 5,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 7
-    },
-    {
-      "id": 7,
-      "to": 3,
-      "weight": 6,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 9
-    },
-    {
-      "id": 8,
-      "to": 2,
-      "weight": 8,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 9
-    },
-    {
-      "id": 11,
-      "to": 22,
-      "weight": 0,
-      "relation": "MemberOf",
-      "blocked": false,
-      "capacity": 1,
-      "from": 14
-    },
-    {
-      "id": 12,
-      "to": 4,
-      "weight": 4,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": 5,
-      "from": 14
-    },
-    {
-      "id": 13,
-      "to": 25,
-      "weight": 0,
-      "relation": "MemberOf",
-      "blocked": false,
-      "capacity": 1,
-      "from": 15
-    },
-    {
-      "id": 14,
-      "to": 9,
-      "weight": 3,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": 5,
-      "from": 15
-    },
-    {
-      "id": 15,
-      "to": 4,
-      "weight": 6,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 15
-    },
-    {
-      "id": 25,
-      "to": 7,
-      "weight": 3,
-      "relation": "AdminTo",
-      "blocked": false,
-      "capacity": 5,
-      "from": 20
-    },
-    {
-      "id": 26,
-      "to": 6,
-      "weight": 8,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 20
-    },
-    {
-      "id": 27,
-      "to": 24,
-      "weight": 0,
-      "relation": "MemberOf",
-      "blocked": false,
-      "capacity": 1,
-      "from": 20
-    },
-    {
-      "id": 31,
-      "to": 6,
-      "weight": 8,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 22
-    },
-    {
-      "id": 35,
-      "to": 7,
-      "weight": 6,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 24
-    },
-    {
-      "id": 36,
-      "to": 9,
-      "weight": 8,
-      "relation": "AccessTo",
-      "blocked": false,
-      "capacity": 3,
-      "from": 25
-    },
-    {
-      "id": 37,
-      "to": 14,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": 2,
-      "from": 26
-    },
-    {
-      "id": 38,
-      "to": 15,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": 2,
-      "from": 28
-    },
-    {
-      "id": 43,
-      "to": 20,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": 2,
-      "from": 32
-    },
-    {
-      "id": 47,
-      "to": 26,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": 2,
-      "from": 36
-    },
-    {
-      "id": 48,
-      "to": 32,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": 2,
-      "from": 36
-    },
-    {
-      "id": 49,
-      "to": 28,
-      "weight": 10,
-      "relation": "HasSession",
-      "blocked": false,
-      "capacity": 2,
-      "from": 36
-    }
+    {"id": 1, "from": 4, "to": 1, "weight": 5, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 2, "from": 4, "to": 3, "weight": 6, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 3, "from": 5, "to": 8, "weight": 6, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 4, "from": 6, "to": 2, "weight": 9, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 5, "from": 6, "to": 3, "weight": 5, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 6, "from": 7, "to": 3, "weight": 6, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 7, "from": 7, "to": 2, "weight": 8, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 8, "from": 9, "to": 12, "weight": 0, "relation": "MemberOf", "blocked": false, "capacity": 1},
+    {"id": 9, "from": 9, "to": 4, "weight": 4, "relation": "AdminTo", "blocked": false, "capacity": 5},
+    {"id": 10, "from": 10, "to": 14, "weight": 0, "relation": "MemberOf", "blocked": false, "capacity": 1},
+    {"id": 11, "from": 10, "to": 7, "weight": 3, "relation": "AdminTo", "blocked": false, "capacity": 5},
+    {"id": 12, "from": 10, "to": 4, "weight": 6, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 13, "from": 11, "to": 6, "weight": 3, "relation": "AdminTo", "blocked": false, "capacity": 5},
+    {"id": 14, "from": 11, "to": 5, "weight": 8, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 15, "from": 11, "to": 13, "weight": 0, "relation": "MemberOf", "blocked": false, "capacity": 1},
+    {"id": 16, "from": 12, "to": 5, "weight": 8, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 17, "from": 13, "to": 6, "weight": 6, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 18, "from": 14, "to": 7, "weight": 8, "relation": "AccessTo", "blocked": false, "capacity": 3},
+    {"id": 19, "from": 15, "to": 9, "weight": 10, "relation": "HasSession", "blocked": false, "capacity": 2},
+    {"id": 20, "from": 16, "to": 10, "weight": 10, "relation": "HasSession", "blocked": false, "capacity": 2},
+    {"id": 21, "from": 17, "to": 11, "weight": 10, "relation": "HasSession", "blocked": false, "capacity": 2},
+    {"id": 22, "from": 18, "to": 15, "weight": 10, "relation": "HasSession", "blocked": false, "capacity": 2},
+    {"id": 23, "from": 18, "to": 17, "weight": 10, "relation": "HasSession", "blocked": false, "capacity": 2},
+    {"id": 24, "from": 18, "to": 16, "weight": 10, "relation": "HasSession", "blocked": false, "capacity": 2}
   ]
 }
