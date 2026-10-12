@@ -17,10 +17,21 @@ Color nodeColor(NodeType type) {
     }
     return GRAY;
 }
-Vector2 bezier(Vector2 start, Vector2 control1, Vector2 control2, Vector2 end, float t) {
-    float u = 1 - t;
-    return {u*u*u*start.x + 3*u*u*t*control1.x + 3*u*t*t*control2.x + t*t*t*end.x,
-            u*u*u*start.y + 3*u*u*t*control1.y + 3*u*t*t*control2.y + t*t*t*end.y};
+void drawSegment(Vector2 start, Vector2 end, float thickness, Color color, bool blocked) {
+    if (!blocked) {
+        DrawLineEx(start, end, thickness, color);
+        return;
+    }
+    float horizontal = end.x - start.x;
+    float vertical = end.y - start.y;
+    float length = std::sqrt(horizontal * horizontal + vertical * vertical);
+    if (length < 0.01f) return;
+    for (float distance = 0; distance < length; distance += 14) {
+        float finish = std::min(distance + 8, length);
+        Vector2 first{start.x + horizontal * distance / length, start.y + vertical * distance / length};
+        Vector2 second{start.x + horizontal * finish / length, start.y + vertical * finish / length};
+        DrawLineEx(first, second, thickness, color);
+    }
 }
 void centered(Font font, const std::string& text, Vector2 point, float size, Color color) {
     Vector2 extent = MeasureTextEx(font, text.c_str(), size, 1);
@@ -30,6 +41,8 @@ void centered(Font font, const std::string& text, Vector2 point, float size, Col
 
 void GraphView::setGraph(const Graph& graph) {
     nodes.clear();
+    draggedNode = -1;
+    panning = false;
     edges = graph.getEdges();
     attackIds.clear();
     cutIds.clear();
@@ -71,24 +84,32 @@ void GraphView::setBounds(Rectangle area) {
 }
 
 void GraphView::fit() {
-    float height = 120;
-    for (const NodePosition& node : nodes) height = std::max(height, std::abs(node.position.y)*2 + 150);
-    camera.target = {460,0};
-    camera.zoom = std::min(bounds.width/1150, bounds.height/height);
+    float left = -115, right = 1035;
+    float top = -60, bottom = 60;
+    for (const NodePosition& node : nodes) {
+        left = std::min(left, node.position.x - 115);
+        right = std::max(right, node.position.x + 115);
+        top = std::min(top, node.position.y - 75);
+        bottom = std::max(bottom, node.position.y + 75);
+    }
+    camera.target = {(left + right) / 2, (top + bottom) / 2};
+    camera.zoom = std::min(bounds.width / (right - left), bounds.height / (bottom - top));
     camera.zoom = std::max(0.01f, camera.zoom);
 }
 
 int GraphView::nodeAt(Vector2 mouse) const {
     if (!CheckCollisionPointRec(mouse, bounds)) return -1;
     Vector2 world = GetScreenToWorld2D(mouse, camera);
-    for (const NodePosition& node : nodes) {
-        if (CheckCollisionPointCircle(world, node.position, 24)) return node.id;
+    for (int index = static_cast<int>(nodes.size()) - 1; index >= 0; --index) {
+        if (CheckCollisionPointCircle(world, nodes[index].position, 24)) return nodes[index].id;
     }
     return -1;
 }
 
 void GraphView::handleInput() {
     Vector2 mouse = GetMousePosition();
+    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT)) draggedNode = -1;
+    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) panning = false;
     if (CheckCollisionPointRec(mouse, bounds)) {
         float wheel = GetMouseWheelMove();
         if (wheel != 0) {
@@ -98,14 +119,31 @@ void GraphView::handleInput() {
             camera.target.x += before.x - after.x;
             camera.target.y += before.y - after.y;
         }
-        if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE) ||
-            (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && nodeAt(mouse) == -1)) panning = true;
+        if (IsMouseButtonPressed(MOUSE_BUTTON_MIDDLE)) {
+            panning = true;
+            draggedNode = -1;
+        } else if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+            draggedNode = nodeAt(mouse);
+            panning = draggedNode == -1;
+            if (draggedNode != -1) {
+                Vector2 position = positionOf(draggedNode);
+                Vector2 world = GetScreenToWorld2D(mouse, camera);
+                dragOffset = {position.x - world.x, position.y - world.y};
+            }
+        }
     }
-    if (!IsMouseButtonDown(MOUSE_BUTTON_LEFT) && !IsMouseButtonDown(MOUSE_BUTTON_MIDDLE)) panning = false;
     if (panning) {
         Vector2 movement = GetMouseDelta();
         camera.target.x -= movement.x/camera.zoom;
         camera.target.y -= movement.y/camera.zoom;
+    } else if (draggedNode != -1) {
+        Vector2 world = GetScreenToWorld2D(mouse, camera);
+        for (NodePosition& node : nodes) {
+            if (node.id == draggedNode) {
+                node.position = {world.x + dragOffset.x, world.y + dragOffset.y};
+                break;
+            }
+        }
     }
 }
 
@@ -127,21 +165,25 @@ void GraphView::draw(Font font, bool edgeLabels, bool dimOthers, int selectedNod
                 ++total;
             }
         }
-        float offset = (ordinal - (total-1)/2.0f)*35;
-        if (edge.getFrom()>edge.getTo()) offset=-offset;
-        Vector2 start, end, control1, control2;
-        if (edge.getFrom()==edge.getTo()) {
-            start={from.x+17,from.y-17};end={from.x-17,from.y-17};
-            control1={from.x+95+ordinal*25,from.y-110};control2={from.x-65,from.y-110-ordinal*25};
-        } else if (std::abs(from.x-to.x)<1) {
-            start={from.x+24,from.y};end={to.x+24,to.y};
-            control1={from.x+100+ordinal*30,from.y};control2={control1.x,to.y};
+        Vector2 difference{to.x - from.x, to.y - from.y};
+        float length = std::sqrt(difference.x * difference.x + difference.y * difference.y);
+        std::vector<Vector2> points;
+        if (edge.getFrom() == edge.getTo() || length < 48) {
+            float extent = 65 + ordinal * 15.0f;
+            points = {{from.x + 17, from.y - 17}, {from.x + extent, from.y - extent},
+                      {to.x - extent, to.y - extent}, {to.x - 17, to.y - 17}};
         } else {
-            float direction=to.x>from.x?1.0f:-1.0f;
-            start={from.x+direction*24,from.y};end={to.x-direction*24,to.y};
-            float bend=std::abs(end.x-start.x)/2;
-            if (std::abs(to.x-from.x)>250) offset-=75;
-            control1={start.x+direction*bend,start.y+offset};control2={end.x-direction*bend,end.y+offset};
+            Vector2 direction{difference.x / length, difference.y / length};
+            Vector2 normal{-direction.y, direction.x};
+            if (edge.getFrom() > edge.getTo()) normal = {-normal.x, -normal.y};
+            float offset = 0;
+            if (total > 1) offset = -18 + ordinal * 36.0f / (total - 1);
+            float border = std::sqrt(24 * 24 - offset * offset);
+            Vector2 start{from.x + normal.x * offset + direction.x * border,
+                          from.y + normal.y * offset + direction.y * border};
+            Vector2 end{to.x + normal.x * offset - direction.x * border,
+                        to.y + normal.y * offset - direction.y * border};
+            points = {start, end};
         }
         bool attack=includes(attackIds,edge.getID()), cut=includes(cutIds,edge.getID());
         Color color{105,123,146,255};float thickness=2;
@@ -149,20 +191,21 @@ void GraphView::draw(Font font, bool edgeLabels, bool dimOthers, int selectedNod
         if (cut) { color={206,122,245,255};thickness=4; }
         if (edge.isBlocked()) { color={240,120,128,255};thickness=3; }
         if (dimOthers && (!attackIds.empty() || !cutIds.empty()) && !attack && !cut && !edge.isBlocked()) color.a=45;
-        Vector2 previous=start;
-        for (int segment=1;segment<=32;++segment) {
-            Vector2 point=bezier(start,control1,control2,end,segment/32.0f);
-            if (!edge.isBlocked() || (segment/3)%2==0) DrawLineEx(previous,point,thickness,color);
-            previous=point;
+        for (size_t index = 1; index < points.size(); ++index) {
+            drawSegment(points[index - 1], points[index], thickness, color, edge.isBlocked());
         }
-        Vector2 before=bezier(start,control1,control2,end,0.98f);
-        float angle=std::atan2(end.y-before.y,end.x-before.x);
+        Vector2 end = points.back();
+        Vector2 previous = points[points.size() - 2];
+        float angle = std::atan2(end.y - previous.y, end.x - previous.x);
         Vector2 left{end.x-12*std::cos(angle)+5*std::sin(angle),end.y-12*std::sin(angle)-5*std::cos(angle)};
         Vector2 right{end.x-12*std::cos(angle)-5*std::sin(angle),end.y-12*std::sin(angle)+5*std::cos(angle)};
         DrawTriangle(end,left,right,color);
         if (edgeLabels) {
             std::string text=edge.getRelation()+" w"+std::to_string(edge.getWeight())+"/c"+std::to_string(edge.getCapacity());
-            Vector2 middle=bezier(start,control1,control2,end,0.5f);middle.y-=20;
+            Vector2 middle;
+            if (points.size() == 2) middle = {(points[0].x + points[1].x) / 2, (points[0].y + points[1].y) / 2};
+            else middle = {(points[1].x + points[2].x) / 2, (points[1].y + points[2].y) / 2};
+            middle.y -= 20;
             centered(font,text,middle,15,color);
         }
     }
