@@ -70,7 +70,7 @@ public:
     // Mo lai mot edge
     void unblockEdge(int edgeId);
 
-    // Block nhieu edge
+    // Kiem tra tat ca ID truoc khi block nhieu edge
     void blockEdges(
         const vector<int>& edgeIds
     );
