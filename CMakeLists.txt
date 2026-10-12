@@ -63,3 +63,29 @@ target_compile_definitions(
         AttackGraph
         PRIVATE PROJECT_ROOT="${CMAKE_CURRENT_SOURCE_DIR}"
 )
+
+
+# =========================
+# QT DESKTOP INTERFACE
+# =========================
+
+option(BUILD_GUI "Build the Qt 6 Widgets desktop interface" OFF)
+
+if(BUILD_GUI)
+    find_package(Qt6 REQUIRED COMPONENTS Widgets)
+
+    add_executable(AttackGraphGUI WIN32
+        gui/main.cpp
+        gui/MainWindow.cpp
+        gui/MainWindow.h
+    )
+
+    set_target_properties(AttackGraphGUI PROPERTIES AUTOMOC ON)
+    target_link_libraries(AttackGraphGUI PRIVATE attackgraph_core Qt6::Widgets)
+
+    if(MSVC)
+        target_compile_options(AttackGraphGUI PRIVATE /W4 /utf-8)
+    else()
+        target_compile_options(AttackGraphGUI PRIVATE -Wall -Wextra -Wpedantic)
+    endif()
+endif()
