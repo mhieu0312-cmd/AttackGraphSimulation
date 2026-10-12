@@ -392,7 +392,7 @@ void SimulationUI::frame() {
     BeginDrawing();
     ClearBackground(background);
     text("ATTACK GRAPH",20,14,25,accent);
-    text("raylib / C++17   |   Wheel: zoom   Drag: pan   Click node, S/T: source/target",240,20,16,muted);
+    text("raylib / C++17   |   Wheel: zoom   Drag node: move   Empty/middle drag: pan   S/T: assign",240,20,16,muted);
     textbox({20,48,width-186,34},datasetPath,1,!modal);
     if (button({width-156,48,136,34},"Import JSON",!modal)) importDataset(datasetPath);
     float nodeWidth = (width-256)/2;

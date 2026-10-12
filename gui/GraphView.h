@@ -30,5 +30,7 @@ private:
     Rectangle bounds{0, 0, 1000, 500};
     Camera2D camera{{500, 250}, {460, 0}, 0, 1};
     bool panning = false;
+    int draggedNode = -1;
+    Vector2 dragOffset{0, 0};
     Vector2 positionOf(int id) const;
 };
