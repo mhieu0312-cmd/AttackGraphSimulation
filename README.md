@@ -16,7 +16,7 @@ Trong CLion, để trống Program arguments để chọn tương tác. Hoặc n
 ## Build bằng terminal
 
 ```sh
-cmake -S . -B build -DCMAKE_BUILD_TYPE=Debug
+cmake -S . -B build -DBUILD_GUI=OFF -DCMAKE_BUILD_TYPE=Debug
 cmake --build build --config Debug --parallel 2
 ```
 
@@ -65,51 +65,61 @@ JSON có `nodes` và `edges` là array. Mỗi node cần `id`, `name`, `type`, `
 - Các báo cáo trong `docs/` là tài liệu lịch sử; repo hiện không có thư mục test hoặc reference được nhắc trong báo cáo cũ.
 
 
-## Qt GUI — Phase 3
+## Giao diện raylib
 
-GUI có giao diện nền tối với ba panel, Import JSON qua loader Core, Explorer theo 5 loại node, tìm theo ID/name, chọn Source/Target và nhập budget trong miền int64_t. Chọn node trong Explorer hoặc trên graph rồi dùng `Use as Source` / `Use as Target`, hoặc chọn trực tiếp từ dropdown.
+Bản GUI sử dụng **raylib 6.0**, thay cho Qt. Core C++17 và CLI giữ nguyên. Graph được vẽ theo 5 nhóm từ JSON; không hardcode Source, Target, Edge ID hoặc kết quả. Giao diện nền tối, graph ở giữa, tham số phía trên, kết quả Before/After và các nút phía dưới.
 
-Graph được dựng từ node/edge thật của JSON, bố trí theo 5 tầng. Mũi tên thể hiện chiều cạnh; rê chuột để xem ID, relation, weight, capacity, blocked. ID không cần liên tiếp. Bánh xe chuột hoặc +/- để zoom, kéo vùng trống để pan, Fit để xem toàn graph. Edge labels hiện relation và w/c; Dim unrelated làm mờ cạnh không thuộc đường tấn công/cut. Cạnh song song, ngược chiều và self-loop được vẽ riêng. Với graph lớn hoặc quan hệ phức tạp vẫn có thể có giao cắt/nhãn chồng nhau; tắt nhãn và zoom để quan sát.
+### Chạy bằng CLion trên Windows / MinGW
 
-### Luồng mô phỏng
-
-1. **Attack**: gọi hackerSimulation() trên Graph hiện tại, lưu Before, highlight đường Dijkstra màu cam. SUCCESS, OVER_BUDGET và NO_PATH lấy từ Core; remaining token chỉ có giá trị khi SUCCESS.
-2. **Defend**: gọi minimumSTCut(), hiện Max-Flow/Min-Cut Capacity và tô tập cạnh cut màu tím. Bước này chưa block cạnh.
-3. **Apply Selected Patch**: mặc định chọn toàn bộ cut, có thể bỏ chọn một số cạnh. Block các cạnh được chọn trong bộ nhớ, hiện đỏ nét đứt và kiểm tra kết nối bằng BFS. Patch một phần có thể vẫn còn đường đi; capacity đã patch được báo riêng với capacity của toàn cut.
-4. **Re-Attack**: gọi lại hackerSimulation() với cùng Source, Target và budget ban đầu, cập nhật After và tự mở tab Comparison với bảng so sánh.
-5. **Reset**: copy Graph gốc của dataset, xóa kết quả; giữ các cạnh vốn blocked trong JSON. Không ghi lại file JSON.
-
-Before defense / Current graph cho phép xem lại đường Before và trạng thái hiện tại mà không thay đổi Graph mô phỏng. Vị trí node, zoom và pan giữ nguyên khi Attack/Defend/Patch/Re-Attack/Reset hoặc đổi chế độ xem; bố cục chỉ dựng lại khi Import.
-
-Đổi Source/Target/Budget sau Attack tự khôi phục Graph gốc và xóa kết quả cũ để bắt đầu scenario mới. Nút chỉ bật theo thứ tự hợp lệ. Source bằng Target hoặc không có đường đi thì Defend không tính cut và không patch; Re-Attack vẫn có thể xác nhận trạng thái đó. Capacity 0 vẫn có thể tạo cạnh cần patch, vì nó là chi phí patch bằng 0.
-
-Import lỗi giữ dataset đang mở; đường dẫn Unicode được đọc qua QFile rồi truyền stream vào loader Core. Dataset rỗng vẫn import được và hiển thị warning, nhưng các nút mô phỏng bị disabled. Dataset mới tự cập nhật node/edge, input, graph và kết quả, không sửa code hoặc rebuild.
-
-Chỉ có 5 file GUI: gui/main.cpp, gui/MainWindow.h/.cpp, gui/GraphView.h/.cpp. MainWindow giữ trạng thái và gọi API Core; GraphView chỉ vẽ, chọn node, zoom/pan và tô màu. Thuật toán vẫn trong attackgraph_core; CLI/Core không phụ thuộc Qt. Không thêm tests/ hoặc framework đồ thị khác.
-
-### CLion Windows / MinGW
-
-1. Cài Qt 6 Widgets bản **MinGW 64-bit** và compiler tương ứng với bộ Qt. Không chọn bộ MSVC khi build bằng MinGW.
-2. Trong **Settings → Build, Execution, Deployment → Toolchains**, chọn compiler MinGW đi kèm bộ Qt.
-3. Trong **CMake → CMake options**, thêm:
+1. Mở folder chứa `CMakeLists.txt`. Dùng CMake **3.25 trở lên** (CMake đi kèm CLion 2025.2 đáp ứng yêu cầu này).
+2. Trong **Settings → Build, Execution, Deployment → Toolchains**, chọn MinGW có cả C và C++ compiler. Không cần compiler đi kèm Qt.
+3. Trong **Settings → Build, Execution, Deployment → CMake**, xóa tùy chọn `CMAKE_PREFIX_PATH` trỏ tới Qt cũ và đặt:
 
 ```text
--DBUILD_GUI=ON -DCMAKE_PREFIX_PATH=C:/Qt/<version>/mingw_64
+-DBUILD_GUI=ON
 ```
 
-Thay `<version>` bằng phiên bản đã cài, hoặc dùng đường dẫn Qt thực tế của bạn. Nếu đường dẫn có khoảng trắng, đặt giá trị trong dấu ngoặc kép. Ví dụ Qt 6.8 dùng bộ MinGW-w64 13.1 tương ứng.
+4. Chọn **Tools → CMake → Reset Cache and Reload Project**. Lần cấu hình đầu cần internet: CMake tải source raylib đúng phiên bản và kiểm tra SHA256. Các lần build tiếp theo dùng source đã tải trong build folder.
+5. Chọn target / Run Configuration **AttackGraphGUI**, Build rồi Run. `AttackGraph` là chương trình console, không mở GUI.
 
-4. Reset Cache and Reload Project, Build target **AttackGraphGUI**.
-5. Trong Run Configuration chọn executable **AttackGraphGUI**. Thêm thư mục `bin` của Qt và MinGW vào `PATH` của Run Configuration để tìm DLL và plugin Qt khi chạy.
-6. Run rồi bấm **Import JSON**, chọn `data/graph.json`. Có thể truyền đường dẫn JSON vào Program arguments để mở khi khởi động.
+Không cần tài khoản Qt, cài Qt hoặc cấu hình Qt DLL/plugin. Source raylib được biên dịch thành thư viện tĩnh cùng project. MinGW vẫn có thể yêu cầu các DLL runtime của compiler khi chạy ngoài CLion; trong CLion hãy sử dụng môi trường của toolchain. Nộp source project cùng `CMakeLists.txt`, `include/`, `src/`, `gui/`, `third_party/`, `data/`; không cần nộp `.exe`, `.idea` hoặc `cmake-build-*`. Máy của giảng viên cần compiler C/C++ và CMake, như khi build một project C++ thông thường.
 
-Nếu thiếu `Qt6Config.cmake`, kiểm tra CMAKE_PREFIX_PATH trỏ đến folder `mingw_64`, không phải folder Tools/MinGW. Nếu báo thiếu DLL hoặc plugin `windows`, kiểm tra đúng bộ Qt và môi trường PATH. Chạy trên máy khác cần DLL/plugin tương ứng; chưa đóng gói bản phát hành ở Phase 3.
-
-### Build bằng terminal
+Build bằng terminal MinGW:
 
 ```sh
-cmake -S . -B build-gui -DBUILD_GUI=ON -DCMAKE_PREFIX_PATH="C:/Qt/<version>/mingw_64"
+cmake -S . -B build-gui -DBUILD_GUI=ON -DCMAKE_BUILD_TYPE=Debug
 cmake --build build-gui --target AttackGraphGUI --parallel 2
 ```
 
-Mặc định `BUILD_GUI=OFF`: cách build CLI hiện tại vẫn hoạt động trên máy chưa cài Qt. Bật GUI mà chưa có Qt sẽ báo lỗi cấu hình rõ ràng.
+Nếu mạng chặn GitHub/codeload hoặc cần build offline: tải source tag **6.0** từ [raylib](https://github.com/raysan5/raylib/releases/tag/6.0), giải nén và đặt thêm `-DRAYLIB_SOURCE_DIR=C:/libraries/raylib-6.0` (folder chứa `CMakeLists.txt`). Không dùng file `.exe` raylib thay cho source. Chỉ cần CLI thì đặt `-DBUILD_GUI=OFF`, không tải raylib.
+
+Linux cần các gói phát triển OpenGL và X11 của hệ điều hành. Ví dụ Ubuntu: `libgl1-mesa-dev libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev`. Đây là thư viện nền tảng Linux, không cần cài trên Windows.
+
+### Sử dụng
+
+- **Import JSON**: dán đường dẫn vào ô phía trên rồi bấm Import; hỗ trợ Ctrl+A, Ctrl+V, Backspace. Có thể kéo thả file JSON vào cửa sổ hoặc truyền đường dẫn trong Program arguments. Import sai báo lỗi và giữ graph/kết quả hiện tại. Rê chuột lên dòng thông báo để đọc nội dung dài.
+- **Source / Target**: bấm ô để mở Explorer, tìm ID hoặc name; danh sách xếp theo 5 loại node và cuộn bằng con lăn. Hoặc chọn node trên graph rồi nhấn **S** / **T**. Bất kỳ node tồn tại đều có thể làm endpoint. Mặc định chọn ENTRY/TARGET đầu tiên theo JSON, nếu thiếu thì dùng node đầu/cuối.
+- **Budget**: số nguyên không âm đến `INT64_MAX`. Source, Target hoặc Budget thay đổi sẽ khôi phục graph gốc và xóa kết quả cũ để không trộn hai scenario.
+- **Attack**: gọi `hackerSimulation()` (Dijkstra), highlight đường có tổng Weight nhỏ nhất bằng màu cam. `OVER_BUDGET` vẫn hiển thị đường và cost; `NO_PATH` hiển thị cost/token N/A.
+- **Defend**: gọi `minimumSTCut()` (Edmonds–Karp), highlight tập cut màu tím, mở danh sách chọn cạnh. Tất cả cạnh cut được chọn mặc định. Có thể bỏ chọn để thử Patch một phần. Capacity là chi phí phòng thủ, khác Weight của tấn công.
+- **Apply Patch** trong hộp chọn: block các cạnh đã chọn trong bộ nhớ; cạnh bị block màu đỏ nét đứt. **Review Cut** mở lại hộp nếu đã đóng. Tập Min-Cut và tập đã Patch được hiển thị riêng; Patch một phần có thể chưa ngắt kết nối.
+- **Re-Attack**: chạy lại Dijkstra trên graph đã Patch với **budget ban đầu**, cập nhật bảng Before/After. Source = Target hoặc đã mất kết nối thì Defend giữ graph, không tính cut và vẫn cho Re-Attack.
+- **Reset**: phục hồi đúng graph từ lần Import, kể cả cạnh vốn bị blocked. Không ghi đè JSON. Các nút chỉ bật khi đúng giai đoạn: Attack → Defend → Apply Patch → Re-Attack → Reset.
+- **View Before / Current**: đổi dữ liệu hiển thị, không thay đổi trạng thái mô phỏng. Node giữ nguyên vị trí và camera khi đổi view, Patch hoặc Reset.
+- Con lăn để zoom, kéo vùng trống hoặc giữ nút chuột giữa để pan; **Fit** đưa toàn bộ graph vào khung. **Labels** bật Relation / Weight / Capacity thực tế. **Focus** làm mờ cạnh ngoài đường tấn công/cut. Màu node biểu thị loại node; vòng cam đánh dấu node được chọn.
+
+JSON mặc định được tìm ở project → `data/graph.json` cạnh chương trình → `graph.json` cạnh chương trình → `data/graph.json` trong working directory. Không copy JSON tự động vào build folder, nên sửa/thay dataset không cần rebuild. GUI đọc đường dẫn UTF-8 bằng `std::filesystem::u8path`; font Arial trên Windows hoặc DejaVu Sans trên Linux hỗ trợ tiếng Việt. Dataset dùng bộ chữ khác cần font phù hợp; font mặc định raylib là fallback.
+
+### Cấu trúc dễ giải thích
+
+Chỉ có **5 file GUI**, hai class:
+
+- `gui/main.cpp`: tạo cửa sổ, chọn font, tìm dataset, chạy vòng lặp giao diện.
+- `gui/SimulationUI.h/.cpp`: giữ graph gốc/graph hiện tại, xử lý các nút và gọi Core, hiển thị kết quả.
+- `gui/GraphView.h/.cpp`: chia node vào 5 cột, vẽ cạnh có hướng, chọn node, zoom/pan và highlight. Không chứa Dijkstra hoặc Min-Cut.
+
+Các hàm Attack/Defend/Re-Attack nhận tham số đã chọn trong GUI và lưu kết quả trả về từ Core; Apply Patch dùng vector Edge ID đã chọn. Graph gốc được copy để Reset và xem Before. Hai vector vị trí và cạnh trong GraphView chỉ phục vụ vẽ, vì vậy đổi trạng thái blocked không làm node nhảy vị trí. Đường cong cạnh dùng công thức Bézier để tách các cạnh song song/đối hướng; không phải thuật toán tìm đường.
+
+### Kiểm chứng bản chuyển đổi
+
+Đã build native Linux, cấu hình tải raylib tự động và build cross-compile Windows bằng MinGW-w64 13. Đã chạy cửa sổ raylib thực tế trên màn hình ảo Linux, kiểm tra baseline, Patch toàn bộ/một phần, budget thiếu/tràn, Source = Target, NO_PATH, Import sai giữ trạng thái, dataset ID khác, cạnh capacity 0/parallel, Reset và vị trí Before/After. Chưa chạy trực tiếp trên Windows/CLion của người dùng; cross-compile không thay thế kiểm chứng runtime trên máy đó. Không thêm thư mục `tests/` hoặc thay Core/dataset chính.

@@ -66,25 +66,42 @@ target_compile_definitions(
 
 
 # =========================
-# QT DESKTOP INTERFACE
+# RAYLIB DESKTOP INTERFACE
 # =========================
 
-option(BUILD_GUI "Build the Qt 6 Widgets desktop interface" OFF)
+option(BUILD_GUI "Build the raylib desktop interface" ON)
+set(RAYLIB_SOURCE_DIR "" CACHE PATH "Optional local raylib 6.0 source folder for offline builds")
 
 if(BUILD_GUI)
-    find_package(Qt6 REQUIRED COMPONENTS Widgets)
+    if(CMAKE_VERSION VERSION_LESS 3.25)
+        message(FATAL_ERROR "raylib 6.0 requires CMake 3.25 or newer. Use BUILD_GUI=OFF for CLI only.")
+    endif()
+    enable_language(C)
+    set(BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+    set(BUILD_SHARED_LIBS OFF CACHE BOOL "" FORCE)
+    set(GLFW_BUILD_WAYLAND OFF CACHE BOOL "" FORCE)
 
-    add_executable(AttackGraphGUI WIN32
+    if(RAYLIB_SOURCE_DIR)
+        add_subdirectory("${RAYLIB_SOURCE_DIR}" "${CMAKE_BINARY_DIR}/raylib")
+    else()
+        include(FetchContent)
+        FetchContent_Declare(raylib
+            URL https://codeload.github.com/raysan5/raylib/tar.gz/refs/tags/6.0
+            URL_HASH SHA256=2b3ee1e2120c7a0796b33062c7e9a694dd8a8caa56a96319ac8c8ecf54a90d0b
+            DOWNLOAD_EXTRACT_TIMESTAMP TRUE
+        )
+        FetchContent_MakeAvailable(raylib)
+    endif()
+
+    add_executable(AttackGraphGUI
         gui/main.cpp
-        gui/MainWindow.cpp
-        gui/MainWindow.h
+        gui/SimulationUI.cpp
+        gui/SimulationUI.h
         gui/GraphView.cpp
         gui/GraphView.h
     )
-
-    set_target_properties(AttackGraphGUI PROPERTIES AUTOMOC ON)
-    target_link_libraries(AttackGraphGUI PRIVATE attackgraph_core Qt6::Widgets)
-
+    target_link_libraries(AttackGraphGUI PRIVATE attackgraph_core raylib)
+    target_compile_definitions(AttackGraphGUI PRIVATE PROJECT_ROOT="${CMAKE_CURRENT_SOURCE_DIR}")
     if(MSVC)
         target_compile_options(AttackGraphGUI PRIVATE /W4 /utf-8)
     else()

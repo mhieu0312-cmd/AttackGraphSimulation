@@ -1,65 +1,34 @@
 #pragma once
-
 #include "Graph.h"
-#include <QGraphicsView>
-#include <QPointF>
+#include "raylib.h"
 #include <vector>
 
-class QGraphicsEllipseItem;
-class QGraphicsPathItem;
-class QGraphicsPolygonItem;
-class QGraphicsSimpleTextItem;
-class QWheelEvent;
-class QMouseEvent;
-
-class GraphView : public QGraphicsView {
-    Q_OBJECT
-
+class GraphView {
 public:
-    explicit GraphView(QWidget* parent = nullptr);
-    void setGraph(const Graph& graph);
-    void updateGraph(const Graph& graph, const std::vector<int>& attackIds,
-                     const std::vector<int>& cutIds);
-    void selectNode(int id);
-    void setEdgeLabelsVisible(bool visible);
-    void setDimUnrelated(bool dim);
-    void fitGraph();
-    void zoomIn();
-    void zoomOut();
-
-signals:
-    void nodeSelected(int id);
-
-protected:
-    void wheelEvent(QWheelEvent* event) override;
-    void mousePressEvent(QMouseEvent* event) override;
-
-private:
-    struct NodeDrawing {
+    struct NodePosition {
         int id;
         NodeType type;
-        QPointF position;
-        QGraphicsEllipseItem* circle;
+        std::string name;
+        Vector2 position;
     };
-    struct EdgeDrawing {
-        int id;
-        int from;
-        int to;
-        bool blocked;
-        QString tooltip;
-        QGraphicsPathItem* line;
-        QGraphicsPolygonItem* arrow;
-        QGraphicsSimpleTextItem* label;
-    };
+    void setGraph(const Graph& graph);
+    void updateGraph(const Graph& graph, const std::vector<int>& attack, const std::vector<int>& cut);
+    void setBounds(Rectangle area);
+    void fit();
+    void handleInput();
+    void draw(Font font, bool edgeLabels, bool dimOthers, int selectedNode) const;
+    int nodeAt(Vector2 mouse) const;
+    const std::vector<NodePosition>& getPositions() const { return nodes; }
+    Rectangle getBounds() const { return bounds; }
+    Camera2D getCamera() const { return camera; }
 
-    std::vector<NodeDrawing> nodes;
-    std::vector<EdgeDrawing> edges;
-    std::vector<int> attackEdgeIds;
-    std::vector<int> cutEdgeIds;
-    bool labelsVisible = false;
-    bool dimUnrelated = false;
-
-    QPointF nodePosition(int id) const;
-    void refreshColors();
-    void changeZoom(double factor);
+private:
+    std::vector<NodePosition> nodes;
+    std::vector<Edge> edges;
+    std::vector<int> attackIds;
+    std::vector<int> cutIds;
+    Rectangle bounds{0, 0, 1000, 500};
+    Camera2D camera{{500, 250}, {460, 0}, 0, 1};
+    bool panning = false;
+    Vector2 positionOf(int id) const;
 };
