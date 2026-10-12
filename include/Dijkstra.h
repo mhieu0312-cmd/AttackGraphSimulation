@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <iosfwd>
 #include <optional>
+#include <string>
 #include <vector>
 
 using namespace std;
@@ -53,7 +54,7 @@ enum class AttackStatus {
 
 struct AttackResult {
 
-    // Duong di cua hacker
+    // Duong Dijkstra du kien, chua xet budget
     PathResult path;
 
     // Trang thai tan cong
@@ -62,7 +63,9 @@ struct AttackResult {
     // Token ban dau
     int64_t initialBudget = 0;
 
-    // Token con lai neu tan cong thanh cong
+    // Hanh trinh thuc te, chi gom canh da di qua duoc.
+    PathResult traveledPath;
+    string stopReason;
     optional<int64_t> remainingToken;
 };
 
@@ -83,12 +86,14 @@ PathResult dijkstra(
 // HACKER SIMULATION
 // =========================
 
-// Mo phong hacker voi budget cho truoc
+// Dijkstra tim lo trinh; hacker chi di khi canh con mo va du token.
+// Neu NO_PATH sau Patch, thu lai lo trinh cu va dung tai canh khong di duoc.
 AttackResult hackerSimulation(
     const Graph& graph,
     int start,
     int target,
-    int64_t budget
+    int64_t budget,
+    const PathResult* previousRoute = nullptr
 );
 
 

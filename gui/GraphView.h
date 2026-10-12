@@ -12,7 +12,8 @@ public:
         Vector2 position;
     };
     void setGraph(const Graph& graph);
-    void updateGraph(const Graph& graph, const std::vector<int>& attack, const std::vector<int>& cut);
+    void updateGraph(const Graph& graph, const std::vector<int>& attack, const std::vector<int>& cut,
+                     const std::vector<int>& visitedNodes = {});
     void setBounds(Rectangle area);
     void fit();
     void handleInput();
@@ -27,6 +28,7 @@ private:
     std::vector<Edge> edges;
     std::vector<int> attackIds;
     std::vector<int> cutIds;
+    std::vector<int> visitedNodeIds;
     Rectangle bounds{0, 0, 1000, 500};
     Camera2D camera{{500, 250}, {460, 0}, 0, 1};
     bool panning = false;

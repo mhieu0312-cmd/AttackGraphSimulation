@@ -83,11 +83,11 @@ void SimulationUI::clearResults() {
 
 void SimulationUI::refreshView() {
     const Graph& displayed = showBefore ? originalGraph : graph;
-    std::vector<int> path;
-    if (showBefore && hasBefore) path = before.path.edgeIds;
-    else if (hasAfter) path = after.path.edgeIds;
-    else if (hasBefore && stage != Stage::PATCHED) path = before.path.edgeIds;
-    view.updateGraph(displayed,path,hasCut && !showBefore ? cut.edgeIds : std::vector<int>{});
+    PathResult traveled;
+    if (showBefore && hasBefore) traveled = before.traveledPath;
+    else if (hasAfter) traveled = after.traveledPath;
+    else if (hasBefore && stage != Stage::PATCHED) traveled = before.traveledPath;
+    view.updateGraph(displayed,traveled.edgeIds,hasCut && !showBefore ? cut.edgeIds : std::vector<int>{},traveled.nodes);
 }
 
 bool SimulationUI::importDataset(const std::string& filename) {
@@ -146,7 +146,7 @@ void SimulationUI::attack() {
         initialBudget = budget;
         hasBefore = true;
         stage = Stage::ATTACKED;
-        message = "Dijkstra: " + statusText(before.status) + ". Defend can now calculate the minimum cut.";
+        message = "Attack: " + statusText(before.status) + " | Stop: " + nodeLabel(before.traveledPath.nodes.back()) + " | " + before.stopReason + ". Defend is now available.";
         refreshView();
     } catch (const std::exception& error) { message = error.what(); }
 }
@@ -196,12 +196,12 @@ void SimulationUI::applyPatch() {
 void SimulationUI::reAttack() {
     if (stage != Stage::PATCHED) return;
     try {
-        after = hackerSimulation(graph,source,target,initialBudget);
+        after = hackerSimulation(graph,source,target,initialBudget,&before.path);
         reachableAfter = Defender(graph).isReachable(source,target);
         hasAfter = true;
         stage = Stage::COMPLETED;
         showBefore = false;
-        message = "Re-Attack: " + statusText(after.status) + ". Reset to start a new run.";
+        message = "Re-Attack: " + statusText(after.status) + " | Stop: " + nodeLabel(after.traveledPath.nodes.back()) + " | " + after.stopReason + ". Reset to start a new run.";
         refreshView();
     } catch (const std::exception& error) { message = error.what(); }
 }
@@ -278,14 +278,14 @@ void SimulationUI::textbox(Rectangle area, std::string& value, int id, bool enab
 
 void SimulationUI::drawResults(float y) {
     float width = static_cast<float>(GetScreenWidth());
-    DrawRectangleRounded({20,y,width-40,154},0.08f,6,panel);
+    DrawRectangleRounded({20,y,width-40,174},0.08f,6,panel);
     float beforeX = 190;
     float afterX = width/2+80;
     text("COMPARISON",34,y+12,17,muted);
     text("BEFORE",beforeX,y+12,17,accent);
     text("AFTER",afterX,y+12,17,accent);
-    const char* labels[]{"Status / Cost","Tokens / Reach","Attack path"};
-    for (int row=0;row<3;++row) text(labels[row],34,y+39+row*25,16,muted);
+    const char* labels[]{"Status / Spent","Tokens / S-T","Traveled path","Stop / Need"};
+    for (int row=0;row<4;++row) text(labels[row],34,y+39+row*24,16,muted);
     const AttackResult* results[]{&before,&after};
     bool present[]{hasBefore,hasAfter};
     bool reachable[]{reachableBefore,reachableAfter};
@@ -293,16 +293,18 @@ void SimulationUI::drawResults(float y) {
     for (int column=0;column<2;++column) {
         if (!present[column]) { text("--",columns[column],y+39,17,muted); continue; }
         const AttackResult& result = *results[column];
-        std::string cost = result.path.reachable ? std::to_string(result.path.totalCost) : "N/A";
+        std::string cost = std::to_string(result.traveledPath.totalCost);
         clippedText(statusText(result.status)+" / "+cost,{columns[column],y+39,width/2-200,22},accent);
         std::string remaining = result.remainingToken ? std::to_string(*result.remainingToken) : "N/A";
-        text(remaining+" / "+(reachable[column]?"YES":"NO"),columns[column],y+64,17);
-        clippedText(idsText(result.path.nodes," > "),{columns[column],y+89,width/2-200,22});
+        text(remaining+" / "+(reachable[column]?"YES":"NO"),columns[column],y+63,17);
+        clippedText(idsText(result.traveledPath.nodes," > "),{columns[column],y+87,width/2-200,22});
+        std::string needed = result.path.reachable ? std::to_string(result.path.totalCost) : "N/A";
+        text("#"+std::to_string(result.traveledPath.nodes.back())+" / "+needed,columns[column],y+111,17);
     }
     std::string defense = "Flow / Cut: ";
     defense += hasCut ? std::to_string(cut.maxFlow)+" / "+std::to_string(cut.minCutCapacity) : "N/A";
     defense += "    Patched IDs: " + idsText(patchedIds);
-    clippedText(defense,{34,y+124,width-68,23},muted);
+    clippedText(defense,{34,y+148,width-68,23},muted);
 }
 
 void SimulationUI::drawPopup(bool acceptInput) {
@@ -376,7 +378,7 @@ void SimulationUI::frame() {
         if (files.count > 0) importDataset(files.paths[0]);
         UnloadDroppedFiles(files);
     }
-    view.setBounds({20,168,width-40,height-454});
+    view.setBounds({20,168,width-40,height-474});
     if (!modal) {
         view.handleInput();
         if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT) && CheckCollisionPointRec(GetMousePosition(),view.getBounds())) {
@@ -410,13 +412,13 @@ void SimulationUI::frame() {
     textbox({width-216,110,196,34},budgetText,2,!modal);
     DrawRectangleRounded(view.getBounds(),0.01f,6,panel);
     view.draw(font,showLabels,dimEdges,selectedNode);
-    float toolbar = height-276;
+    float toolbar = height-296;
     if (button({20,toolbar,128,30},showBefore?"View: Before":"View: Current",!modal && hasBefore)) { showBefore=!showBefore;refreshView(); }
     if (button({158,toolbar,112,30},showLabels?"Labels: On":"Labels: Off",!modal)) showLabels=!showLabels;
     if (button({280,toolbar,128,30},dimEdges?"Focus: On":"Focus: Off",!modal)) dimEdges=!dimEdges;
     if (button({418,toolbar,70,30},"Fit",!modal)) view.fit();
     clippedText(selectedNode == -1 ? "Orange: attack   Purple: cut   Red dashed: blocked" : "Selected: "+nodeLabel(selectedNode)+" | S/T keys assign",{505,toolbar+6,width-525,22},muted);
-    drawResults(height-236);
+    drawResults(height-256);
     float actionWidth = (width-80)/5;
     float y = height-42;
     if (button({20,y,actionWidth,32},"Attack",!modal && stage == Stage::READY && source != -1 && target != -1)) attack();
