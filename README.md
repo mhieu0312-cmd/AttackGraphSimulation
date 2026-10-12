@@ -65,13 +65,27 @@ JSON có `nodes` và `edges` là array. Mỗi node cần `id`, `name`, `type`, `
 - Các báo cáo trong `docs/` là tài liệu lịch sử; repo hiện không có thư mục test hoặc reference được nhắc trong báo cáo cũ.
 
 
-## Qt GUI — bước đầu của Phase 3
+## Qt GUI — Phase 3
 
-GUI hiện có giao diện nền tối với ba panel, Import JSON qua loader Core, Explorer theo 5 loại node, tìm theo ID/name, chọn Source/Target và nhập budget trong miền int64_t. Chọn node rồi dùng `Use as Source` / `Use as Target`, hoặc chọn trực tiếp từ dropdown.
+GUI có giao diện nền tối với ba panel, Import JSON qua loader Core, Explorer theo 5 loại node, tìm theo ID/name, chọn Source/Target và nhập budget trong miền int64_t. Chọn node trong Explorer hoặc trên graph rồi dùng `Use as Source` / `Use as Target`, hoặc chọn trực tiếp từ dropdown.
 
-Bước này chưa vẽ graph hoặc chạy mô phỏng. Các nút Attack/Defend/Re-Attack/Reset đang disabled; bảng Before/After hiển thị `--` cho kết quả chưa có. Không hiển thị kết quả giả. Import lỗi giữ dataset đang mở; đường dẫn Unicode được đọc qua QFile rồi truyền stream vào loader Core. Dataset rỗng vẫn import được và hiển thị warning, nhưng không có node để chọn.
+Graph được dựng từ node/edge thật của JSON, bố trí theo 5 tầng. Mũi tên thể hiện chiều cạnh; rê chuột để xem ID, relation, weight, capacity, blocked. ID không cần liên tiếp. Bánh xe chuột hoặc +/- để zoom, kéo vùng trống để pan, Fit để xem toàn graph. Edge labels hiện relation và w/c; Dim unrelated làm mờ cạnh không thuộc đường tấn công/cut. Cạnh song song, ngược chiều và self-loop được vẽ riêng. Với graph lớn hoặc quan hệ phức tạp vẫn có thể có giao cắt/nhãn chồng nhau; tắt nhãn và zoom để quan sát.
 
-Chỉ thêm `gui/main.cpp` và `gui/MainWindow.h/.cpp`. GraphView sẽ được thêm ở bước vẽ graph. Core và CLI không phụ thuộc Qt.
+### Luồng mô phỏng
+
+1. **Attack**: gọi hackerSimulation() trên Graph hiện tại, lưu Before, highlight đường Dijkstra màu cam. SUCCESS, OVER_BUDGET và NO_PATH lấy từ Core; remaining token chỉ có giá trị khi SUCCESS.
+2. **Defend**: gọi minimumSTCut(), hiện Max-Flow/Min-Cut Capacity và tô tập cạnh cut màu tím. Bước này chưa block cạnh.
+3. **Apply Selected Patch**: mặc định chọn toàn bộ cut, có thể bỏ chọn một số cạnh. Block các cạnh được chọn trong bộ nhớ, hiện đỏ nét đứt và kiểm tra kết nối bằng BFS. Patch một phần có thể vẫn còn đường đi; capacity đã patch được báo riêng với capacity của toàn cut.
+4. **Re-Attack**: gọi lại hackerSimulation() với cùng Source, Target và budget ban đầu, cập nhật After và tự mở tab Comparison với bảng so sánh.
+5. **Reset**: copy Graph gốc của dataset, xóa kết quả; giữ các cạnh vốn blocked trong JSON. Không ghi lại file JSON.
+
+Before defense / Current graph cho phép xem lại đường Before và trạng thái hiện tại mà không thay đổi Graph mô phỏng. Vị trí node, zoom và pan giữ nguyên khi Attack/Defend/Patch/Re-Attack/Reset hoặc đổi chế độ xem; bố cục chỉ dựng lại khi Import.
+
+Đổi Source/Target/Budget sau Attack tự khôi phục Graph gốc và xóa kết quả cũ để bắt đầu scenario mới. Nút chỉ bật theo thứ tự hợp lệ. Source bằng Target hoặc không có đường đi thì Defend không tính cut và không patch; Re-Attack vẫn có thể xác nhận trạng thái đó. Capacity 0 vẫn có thể tạo cạnh cần patch, vì nó là chi phí patch bằng 0.
+
+Import lỗi giữ dataset đang mở; đường dẫn Unicode được đọc qua QFile rồi truyền stream vào loader Core. Dataset rỗng vẫn import được và hiển thị warning, nhưng các nút mô phỏng bị disabled. Dataset mới tự cập nhật node/edge, input, graph và kết quả, không sửa code hoặc rebuild.
+
+Chỉ có 5 file GUI: gui/main.cpp, gui/MainWindow.h/.cpp, gui/GraphView.h/.cpp. MainWindow giữ trạng thái và gọi API Core; GraphView chỉ vẽ, chọn node, zoom/pan và tô màu. Thuật toán vẫn trong attackgraph_core; CLI/Core không phụ thuộc Qt. Không thêm tests/ hoặc framework đồ thị khác.
 
 ### CLion Windows / MinGW
 
@@ -89,7 +103,7 @@ Thay `<version>` bằng phiên bản đã cài, hoặc dùng đường dẫn Qt 
 5. Trong Run Configuration chọn executable **AttackGraphGUI**. Thêm thư mục `bin` của Qt và MinGW vào `PATH` của Run Configuration để tìm DLL và plugin Qt khi chạy.
 6. Run rồi bấm **Import JSON**, chọn `data/graph.json`. Có thể truyền đường dẫn JSON vào Program arguments để mở khi khởi động.
 
-Nếu thiếu `Qt6Config.cmake`, kiểm tra CMAKE_PREFIX_PATH trỏ đến folder `mingw_64`, không phải folder Tools/MinGW. Nếu báo thiếu DLL hoặc plugin `windows`, kiểm tra đúng bộ Qt và môi trường PATH. Chạy trên máy khác cần DLL/plugin tương ứng; chưa đóng gói bản phát hành trong bước này.
+Nếu thiếu `Qt6Config.cmake`, kiểm tra CMAKE_PREFIX_PATH trỏ đến folder `mingw_64`, không phải folder Tools/MinGW. Nếu báo thiếu DLL hoặc plugin `windows`, kiểm tra đúng bộ Qt và môi trường PATH. Chạy trên máy khác cần DLL/plugin tương ứng; chưa đóng gói bản phát hành ở Phase 3.
 
 ### Build bằng terminal
 
