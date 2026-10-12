@@ -1,10 +1,8 @@
-# Hợp đồng dữ liệu và validation
+# Schema JSON hiện tại
 
-## JSON
+Schema này mô tả `src/LoadDataset.cpp`, `src/Graph.cpp` và `src/MinCut.cpp` hiện tại. Các báo cáo kiểm thử cũ trong `docs/` là tài liệu lịch sử.
 
-Root là object chứa `nodes`, `edges` và có thể có `metadata`. Hai trường đầu là array. `metadata` chỉ dành cho ghi chú, không tham gia thuật toán. Loader không suy đoán schema cũ, không tự chuyển CSV hoặc đổi ID. Đây là schema đề xuất có triển khai và test; **chưa đối chiếu với JSON thật vì file chưa được gửi**.
-
-Ví dụ định dạng tối thiểu dùng riêng để minh họa:
+Root phải là object có hai array `nodes`, `edges`. `metadata` là object tùy chọn, dùng để ghi chú và không tham gia thuật toán. Không giới hạn số node/cạnh ở 18/24; đó là quy mô dataset chính thức hiện tại.
 
 ```json
 {
@@ -13,40 +11,39 @@ Ví dụ định dạng tối thiểu dùng riêng để minh họa:
     {"id": 90, "name": "T", "type": "TARGET", "assets": 0}
   ],
   "edges": [
-    {"id": 7, "from": 10, "to": 90, "weight": 0,
-     "relation": "AccessTo", "blocked": false, "capacity": null}
+    {"id": 7, "from": 10, "to": 90, "weight": 3,
+     "capacity": 2, "relation": "AccessTo", "blocked": false}
   ]
 }
 ```
 
 | Trường | Quy tắc |
 |---|---|
-| Node `id` | Số nguyên 0..INT_MAX, duy nhất; không cần liên tiếp |
-| `name` | Chuỗi không rỗng/toàn khoảng trắng |
-| `type` | `ENTRY`, `ENDPOINT`, `IDENTITY`, `CRITICAL_SYSTEM`, `TARGET` |
-| `assets` | Số nguyên 0..INT_MAX; không cộng vào cost đường đi |
-| Edge `id` | Số nguyên 0..INT_MAX, duy nhất, bắt buộc trong JSON |
-| `from`, `to` | Phải tham chiếu node tồn tại; cạnh có hướng |
-| `weight` | Số nguyên 0..INT_MAX; 0 là cạnh tồn tại miễn phí, không phải “không có cạnh” |
-| `relation` | `HasSession`, `AdminTo`, `MemberOf`, `AccessTo`, theo `00_START` dòng 6 |
-| `blocked` | Boolean; nếu thiếu mặc định false |
-| `capacity` | Tùy chọn; null/thiếu nghĩa chưa có giá trị; số nguyên 0..INT_MAX nếu có |
+| Node `id` | Số nguyên 0..INT_MAX, duy nhất trong nodes, không cần liên tiếp |
+| `name` | Chuỗi không rỗng hoặc chỉ chứa khoảng trắng |
+| `type` | ENTRY, ENDPOINT, IDENTITY, CRITICAL_SYSTEM, TARGET |
+| `assets` | Số nguyên 0..INT_MAX, bắt buộc để tương thích model; không tham gia Dijkstra/Min-Cut |
+| Edge `id` | Số nguyên 0..INT_MAX, duy nhất trong edges, không cần liên tiếp |
+| `from`, `to` | ID của node tồn tại; cạnh có hướng |
+| `weight` | Số nguyên 0..INT_MAX, chi phí attacker; 0 vẫn là cạnh đi được |
+| `capacity` | Số nguyên 0..INT_MAX, bắt buộc; không chấp nhận thiếu/null |
+| `relation` | HasSession, AdminTo, MemberOf, AccessTo |
+| `blocked` | Boolean tùy chọn, mặc định false |
 
-Node/edge bắt buộc đủ các trường không ghi tùy chọn. Từ chối trường lạ ở root/node/edge để bắt lỗi gõ tên, duplicate key, số thực ở trường nguyên, ID trùng, relation/type lạ, tham chiếu node không tồn tại, cost/capacity âm. JSON chuẩn không chấp nhận `//` hoặc `/* */`.
+Loader từ chối trường lạ ở root/node/edge, key JSON trùng, dữ liệu thừa sau JSON, trường bắt buộc thiếu, kiểu dữ liệu sai, ID trùng, tham chiếu không tồn tại và số ngoài miền cho phép. Trường trong metadata được phép tùy ý, nhưng key vẫn không được trùng. JSON không hỗ trợ comment.
 
-Loader xây graph tạm và chỉ trả về khi thành công; lỗi có vị trí `nodes[i]`/`edges[i]` nếu xảy ra khi đọc bản ghi. `Graph` kiểm tra cùng các ràng buộc khi thêm trực tiếp từ C++. Cạnh song song, chu trình và self-loop được hỗ trợ; chúng không tự bị xóa. Không dùng số lượng 37–38/~55 làm điều kiện hợp lệ.
+Lỗi đọc bản ghi có vị trí `nodes[i]` hoặc `edges[i]`, chỉ số bắt đầu từ 0. Lỗi cú pháp/key trùng xảy ra trước khi dựng Graph và được báo tại root. Graph được tạo tạm; loader chỉ trả về khi đọc thành công.
 
-## Weight và capacity
+Cạnh song song, cạnh ngược chiều, chu trình và self-loop được hỗ trợ. Không tự xóa cạnh hoặc thay đổi quan hệ. Tên relation hợp lệ về schema không chứng minh đó là quyền thực tế trong Active Directory.
 
-- `weight`: số token Hacker tiêu tốn khi đi qua cạnh, phù hợp cách `cost[u][v]` được dùng trong source P2. Dijkstra tối thiểu tổng `weight`.
-- `capacity`: dành cho bài toán phòng thủ. Nhóm cần thống nhất nó là chi phí vá/ngắt quan hệ hay một đại lượng cụ thể khác trước khi có weighted Min-Cut. Giá trị lớn sẽ khiến cạnh đó đắt hơn để chọn vào cut nếu định nghĩa là chi phí vá.
-- Hiện prototype P3 không dùng capacity. Không có max-flow hay mạng dư. Không tự gán `capacity = weight` hoặc 1. Capacity 0 là giá trị có thật, khác với null.
-- Tổng cost dùng `std::int64_t`; mỗi weight vẫn `int` như model ban đầu. Budget dùng `std::int64_t` không âm. Cost chỉ có ý nghĩa khi `PathResult::reachable == true`.
+## Thuật toán và trạng thái
 
-## Những kiểm tra chưa thể suy ra từ schema
+- Dijkstra tối thiểu tổng weight, dùng int64_t cho cost và budget. Cạnh blocked không được đi qua.
+- Edmonds–Karp dùng capacity để tính Max-Flow và Minimum S-T Cut. Assets và weight không tham gia flow.
+- Capacity 0 là chi phí patch bằng 0; cạnh vẫn đi được nếu chưa blocked. Cut có thể chứa cạnh capacity 0 để ngắt kết nối thực sự.
+- `minimumSTCut()` trả ID cạnh gốc, không thay đổi Graph; source phải khác target. Khi không có đường đi, flow/cut bằng 0 và tập cạnh rỗng.
+- `runSimulation()` chạy Attack, Defense, Patch, Re-Attack. Source trùng target hoặc S-T đã mất kết nối thì không patch. Sau patch cấp lại budget ban đầu.
+- Patch chỉ cập nhật blocked trong bộ nhớ; không xóa cạnh hoặc ghi lại JSON. `blockEdges()` kiểm tra toàn bộ ID trước khi thay đổi trạng thái.
+- Reset bằng cách copy Graph ban đầu hoặc load lại dataset, giữ đúng các cạnh vốn blocked trong JSON.
 
-Tên `HasSession` hay `AdminTo` hợp lệ về cú pháp chưa chứng minh quan hệ có ý nghĩa trong mô hình Active Directory của nhóm. Cần dataset/sơ đồ thực để rà chiều, loại node nguồn–đích và ngữ nghĩa quan hệ. `validationWarnings()` hiện chỉ cảnh báo graph rỗng, thiếu Entry/Target, node cô lập, target không reachable từ Entry trên graph active và thiếu capacity. Đây là cảnh báo, không phải tự sửa dữ liệu.
-
-## Phần cây
-
-BFS/DFS đã có và dùng để kiểm tra khả năng duyệt graph. Chúng không biến attack graph thành cây hoặc gán lại quan hệ cha–con. Không bổ sung Bridge/Articulation Point trong bản này: Excel `05_CORE_CUT` xếp đây là P2, trong khi dataset thật và Min-Cut P0 còn thiếu.
+Graph rỗng, thiếu ENTRY/TARGET, node cô lập hoặc TARGET không reachable từ bất kỳ ENTRY nào là warning. CLI tương tác cần ít nhất một node; chế độ demo cần ENTRY và TARGET. Không tự sửa dữ liệu theo warning.

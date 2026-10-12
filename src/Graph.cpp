@@ -62,6 +62,10 @@ void Graph::addNode(Node node) {
         throw invalid_argument("Node name rong");
     }
 
+    if (node.getAssets() < 0) {
+        throw invalid_argument("Assets phai >= 0");
+    }
+
     // Reject invalid enum values even when nodes are added directly.
     nodeTypeToString(node.getType());
     Nodes.push_back(node);
@@ -183,6 +187,12 @@ void Graph::unblockEdge(int edgeId) {
 }
 
 void Graph::blockEdges(const vector<int>& edgeIds) {
+
+    for (int id : edgeIds) {
+        if (getEdge(id) == nullptr) {
+            throw invalid_argument("Khong co edge ID " + to_string(id));
+        }
+    }
 
     for (int id : edgeIds) {
         blockEdge(id);
