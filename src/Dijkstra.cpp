@@ -202,51 +202,49 @@ AttackResult hackerSimulation(
     const Graph& graph,
     int start,
     int target,
-    int64_t budget
+    int64_t budget,
+    const PathResult* previousRoute
 ) {
-
-    // Budget khong duoc am
-    if (budget < 0) {
-        throw invalid_argument(
-            "Budget phai >= 0"
-        );
-    }
-
+    if (budget < 0) throw invalid_argument("Budget phai >= 0");
 
     AttackResult result;
-
     result.initialBudget = budget;
+    result.path = dijkstra(graph, start, target);
+    if (!result.path.reachable) result.status = AttackStatus::NO_PATH;
+    else if (result.path.totalCost > budget) result.status = AttackStatus::OVER_BUDGET;
+    else result.status = AttackStatus::SUCCESS;
 
-    // Tim duong re nhat
-    result.path =
-        dijkstra(graph, start, target);
+    const PathResult* route = &result.path;
+    if (!result.path.reachable && previousRoute != nullptr) route = previousRoute;
+    int current = start;
+    int64_t remaining = budget;
+    result.traveledPath.nodes.push_back(current);
+    result.stopReason = "NO_ROUTE";
 
-
-    // Khong co duong di
-    if (!result.path.reachable) {
-
-        result.status =
-            AttackStatus::NO_PATH;
+    for (int edgeId : route->edgeIds) {
+        if (current == target) break;
+        const Edge* edge = graph.getEdge(edgeId);
+        if (edge == nullptr) {
+            result.stopReason = "EDGE_MISSING";
+            break;
+        }
+        if (edge->getFrom() != current) {
+            result.stopReason = "INVALID_ROUTE";
+            break;
+        }
+        if (!canMove(graph, edgeId, remaining)) {
+            result.stopReason = edge->isBlocked() ? "BLOCKED_EDGE" : "INSUFFICIENT_TOKEN";
+            break;
+        }
+        remaining -= edge->getWeight();
+        result.traveledPath.totalCost += edge->getWeight();
+        result.traveledPath.edgeIds.push_back(edgeId);
+        current = edge->getTo();
+        result.traveledPath.nodes.push_back(current);
     }
-
-    // Co duong nhung khong du token
-    else if (result.path.totalCost > budget) {
-
-        result.status =
-            AttackStatus::OVER_BUDGET;
-    }
-
-    // Hacker di den target thanh cong
-    else {
-
-        result.status =
-            AttackStatus::SUCCESS;
-
-        result.remainingToken =
-            budget - result.path.totalCost;
-    }
-
-
+    result.traveledPath.reachable = current == target;
+    if (result.traveledPath.reachable) result.stopReason = "TARGET_REACHED";
+    result.remainingToken = remaining;
     return result;
 }
 
@@ -303,55 +301,23 @@ void printPath(
 // IN KET QUA ATTACK
 // =========================
 
-void printAttack(
-    const AttackResult& attack,
-    ostream& out
-) {
-
-    out << "Budget khoi tao: "
-        << attack.initialBudget
-        << '\n';
-
-
-    // Khong co duong di
-    if (!attack.path.reachable) {
-
-        out << "NO_PATH: khong con duong di.\n";
-
-        return;
-    }
-
-
-    out << "Path: ";
-
-    printPath(attack.path, out);
-
-
-    out << "\nCost: "
-        << attack.path.totalCost;
-
-    out << "\nEdge IDs:";
-
-
-    for (int id : attack.path.edgeIds) {
-        out << ' ' << id;
-    }
-
-
-    // Tan cong thanh cong
-    if (attack.status == AttackStatus::SUCCESS) {
-
-        out << "\nSUCCESS: token con lai = "
-            << *attack.remainingToken
-            << '\n';
-    }
-
-    // Co duong nhung vuot budget
-    else {
-
-        out << "\nOVER_BUDGET: "
-               "van co duong nhung vuot ngan sach.\n";
-    }
+void printAttack(const AttackResult& attack, ostream& out) {
+    out << "Budget khoi tao: " << attack.initialBudget << '\n';
+    out << "Path da di: ";
+    printPath(attack.traveledPath, out);
+    out << "\nCost da dung: " << attack.traveledPath.totalCost << "\nCost den Target: ";
+    if (attack.path.reachable) out << attack.path.totalCost;
+    else out << "N/A";
+    out << "\nEdge IDs da di:";
+    for (int id : attack.traveledPath.edgeIds) out << ' ' << id;
+    out << "\nTrang thai: ";
+    if (attack.status == AttackStatus::SUCCESS) out << "SUCCESS";
+    else if (attack.status == AttackStatus::OVER_BUDGET) out << "OVER_BUDGET";
+    else out << "NO_PATH";
+    out << "\nDung lai: " << attack.stopReason << "\nToken con lai: ";
+    if (attack.remainingToken) out << *attack.remainingToken;
+    else out << "N/A";
+    out << '\n';
 }
 
 
@@ -364,7 +330,7 @@ void printPathDetailed(
     const PathResult& path,
     ostream& out
 ) {
-    if (!path.reachable || path.nodes.empty()) {
+    if (path.nodes.empty()) {
         out << "(khong co duong di)\n";
         return;
     }
@@ -373,7 +339,8 @@ void printPathDetailed(
         const Node* node = graph.getNode(path.nodes[0]);
         out << "  [1] "
             << (node ? node->getName() : ("Node " + to_string(path.nodes[0])))
-            << " (ID " << path.nodes[0] << ") [Xuat phat tai dich]\n";
+            << " (ID " << path.nodes[0] << ") "
+            << (path.reachable ? "[TARGET]" : "[DUNG LAI]") << '\n';
         return;
     }
 
@@ -395,38 +362,14 @@ void printPathDetailed(
         out << "      ---(" << rel << ", Cost: " << w << ", Edge ID: " << edgeId << ")--->\n";
 
         if (i + 1 == path.edgeIds.size()) {
-            out << "  [" << (i + 2) << "] " << vName << " (ID " << v << ") [TARGET]\n";
+            out << "  [" << (i + 2) << "] " << vName << " (ID " << v << ") "
+                << (path.reachable ? "[TARGET]" : "[DUNG LAI]") << '\n';
         }
     }
 }
 
-void printAttackDetailed(
-    const Graph& graph,
-    const AttackResult& attack,
-    ostream& out
-) {
-    out << "Budget khoi tao: " << attack.initialBudget << '\n';
-
-    if (!attack.path.reachable) {
-        out << "Trang thai: NO_PATH (Khong co duong di den muc tieu)\n";
-        return;
-    }
-
-    out << "Lo trinh tan cong chi tiet:\n";
-    printPathDetailed(graph, attack.path, out);
-
-    out << "Tong chi phi: " << attack.path.totalCost << " Token\n";
-    out << "Edge IDs:";
-    for (int id : attack.path.edgeIds) {
-        out << ' ' << id;
-    }
-    out << '\n';
-
-    if (attack.status == AttackStatus::SUCCESS) {
-        out << "Ket luan: SUCCESS (Hacker tiep can muc tieu thanh cong)\n";
-        out << "Token con lai: " << *attack.remainingToken << '\n';
-    } else {
-        out << "Ket luan: OVER_BUDGET (Phat hien duong di nhung thieu "
-            << (attack.path.totalCost - attack.initialBudget) << " Token)\n";
-    }
+void printAttackDetailed(const Graph& graph, const AttackResult& attack, ostream& out) {
+    printAttack(attack, out);
+    out << "Hanh trinh thuc te:\n";
+    printPathDetailed(graph, attack.traveledPath, out);
 }

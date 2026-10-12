@@ -46,6 +46,7 @@ void GraphView::setGraph(const Graph& graph) {
     edges = graph.getEdges();
     attackIds.clear();
     cutIds.clear();
+    visitedNodeIds.clear();
     const NodeType types[]{NodeType::ENTRY, NodeType::ENDPOINT, NodeType::IDENTITY,
                            NodeType::CRITICAL_SYSTEM, NodeType::TARGET};
     for (int layer = 0; layer < 5; ++layer) {
@@ -61,8 +62,10 @@ void GraphView::setGraph(const Graph& graph) {
     fit();
 }
 
-void GraphView::updateGraph(const Graph& graph, const std::vector<int>& attack, const std::vector<int>& cut) {
+void GraphView::updateGraph(const Graph& graph, const std::vector<int>& attack, const std::vector<int>& cut,
+                            const std::vector<int>& visitedNodes) {
     attackIds = attack;
+    visitedNodeIds = visitedNodes;
     cutIds = cut;
     for (Edge& edge : edges) {
         const Edge* current = graph.getEdge(edge.getID());
@@ -210,13 +213,16 @@ void GraphView::draw(Font font, bool edgeLabels, bool dimOthers, int selectedNod
         }
     }
     for (const NodePosition& node : nodes) {
-        bool onPath=false;
+        bool onPath=includes(visitedNodeIds,node.id);
         for (const Edge& edge : edges) {
             if (includes(attackIds,edge.getID()) && (edge.getFrom()==node.id || edge.getTo()==node.id)) onPath=true;
         }
         DrawCircleV(node.position,24,onPath?Color{204,139,52,255}:nodeColor(node.type));
         DrawCircleLinesV(node.position,24,{224,233,245,255});
         if (node.id==selectedNode) DrawCircleLinesV(node.position,29,{245,176,77,255});
+        if (!visitedNodeIds.empty() && node.id == visitedNodeIds.back()) {
+            centered(font,"HACKER",{node.position.x,node.position.y-43},14,{245,176,77,255});
+        }
         const std::string id=std::to_string(node.id);
         float size=id.size()>5?11.0f:19.0f;
         centered(font,id,{node.position.x,node.position.y-size/2},size,WHITE);

@@ -54,7 +54,7 @@ SimulationResult runSimulation(
     result.newlyBlockedEdges = result.patchedEdgeIds.size();
 
     // Independent attack attempts receive the same initial token budget.
-    result.after = hackerSimulation(graph, source, target, budget);
+    result.after = hackerSimulation(graph, source, target, budget, &result.before.path);
     result.reachableAfter = defender.isReachable(source, target);
     if (result.minCut && result.reachableAfter) {
         throw logic_error("Auto Patch: tap Min-Cut khong ngat duoc S-T");

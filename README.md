@@ -54,7 +54,7 @@ JSON có `nodes` và `edges` là array. Mỗi node cần `id`, `name`, `type`, `
 
 ## Kết quả và giới hạn
 
-- `SUCCESS`: cost ≤ budget; `OVER_BUDGET`: có đường nhưng thiếu token; `NO_PATH`: không có đường.
+- `SUCCESS`: hacker thực sự đến Target; `OVER_BUDGET`: có đường Dijkstra nhưng không đủ token để đi hết; `NO_PATH`: Graph hiện tại không có đường S–T.
 - Sau patch, attacker được cấp lại budget ban đầu. Patch đổi `blocked` trong bộ nhớ, không ghi JSON.
 - Auto Defense gọi `minimumSTCut()` rồi block toàn bộ Edge ID trong tập cut, dựa trên dataset và Source/Target được chọn.
 - Min-Cut Capacity là chi phí phòng thủ của mô hình, khác Attack Cost và Token Budget. Auto Defense vẫn chạy khi attacker ban đầu `OVER_BUDGET` nhưng S–T còn reachable.
@@ -100,15 +100,17 @@ Linux cần các gói phát triển OpenGL và X11 của hệ điều hành. Ví
 - **Import JSON**: dán đường dẫn vào ô phía trên rồi bấm Import; hỗ trợ Ctrl+A, Ctrl+V, Backspace. Có thể kéo thả file JSON vào cửa sổ hoặc truyền đường dẫn trong Program arguments. Import sai báo lỗi và giữ graph/kết quả hiện tại. Rê chuột lên dòng thông báo để đọc nội dung dài.
 - **Source / Target**: bấm ô để mở Explorer, tìm ID hoặc name; danh sách xếp theo 5 loại node và cuộn bằng con lăn. Hoặc chọn node trên graph rồi nhấn **S** / **T**. Bất kỳ node tồn tại đều có thể làm endpoint. Mặc định chọn ENTRY/TARGET đầu tiên theo JSON, nếu thiếu thì dùng node đầu/cuối.
 - **Budget**: số nguyên không âm đến `INT64_MAX`. Source, Target hoặc Budget thay đổi sẽ khôi phục graph gốc và xóa kết quả cũ để không trộn hai scenario.
-- **Attack**: gọi `hackerSimulation()` (Dijkstra), highlight đường có tổng Weight nhỏ nhất bằng màu cam. `OVER_BUDGET` vẫn hiển thị đường và cost; `NO_PATH` hiển thị cost/token N/A.
+- **Attack**: gọi `hackerSimulation()` (Dijkstra), tìm đường có tổng Weight nhỏ nhất, rồi đi từng cạnh còn mở nếu đủ token. Chỉ các cạnh/node đã đi được highlight màu cam; nhãn **HACKER** đánh dấu node dừng. Thiếu token cho cạnh tiếp theo thì dừng trước cạnh đó, không highlight đến Target.
 - **Defend**: gọi `minimumSTCut()` (Edmonds–Karp), highlight tập cut màu tím, mở danh sách chọn cạnh. Tất cả cạnh cut được chọn mặc định. Có thể bỏ chọn để thử Patch một phần. Capacity là chi phí phòng thủ, khác Weight của tấn công.
 - **Apply Patch** trong hộp chọn: block các cạnh đã chọn trong bộ nhớ; cạnh bị block màu đỏ nét đứt. **Review Cut** mở lại hộp nếu đã đóng. Tập Min-Cut và tập đã Patch được hiển thị riêng; Patch một phần có thể chưa ngắt kết nối.
-- **Re-Attack**: chạy lại Dijkstra trên graph đã Patch với **budget ban đầu**, cập nhật bảng Before/After. Source = Target hoặc đã mất kết nối thì Defend giữ graph, không tính cut và vẫn cho Re-Attack.
+- **Re-Attack**: chạy lại Dijkstra trên graph đã Patch với **budget ban đầu**, cập nhật bảng Before/After. Nếu có đường mới thì dùng đường mới. Nếu không còn đường tới Target, thử lại đường Dijkstra trước phòng thủ và dừng ở cạnh bị Blocked, cạnh thiếu hoặc không đủ token; không đi xuyên cạnh bị chặn. Attack đầu tiên NO_PATH không có lộ trình để thử nên giữ hacker ở Source. Source = Target hoặc đã mất kết nối thì Defend giữ graph, không tính cut và vẫn cho Re-Attack.
 - **Reset**: phục hồi đúng graph từ lần Import, kể cả cạnh vốn bị blocked. Không ghi đè JSON. Các nút chỉ bật khi đúng giai đoạn: Attack → Defend → Apply Patch → Re-Attack → Reset.
 - **View Before / Current**: đổi dữ liệu hiển thị, không thay đổi trạng thái mô phỏng. Node giữ nguyên vị trí và camera khi đổi view, Patch hoặc Reset.
 - Con lăn để zoom; giữ chuột trái trên node và kéo để đổi vị trí, các cạnh đi theo node. Kéo vùng trống hoặc giữ nút chuột giữa để pan; **Fit** đưa toàn bộ graph vào khung. **Labels** bật Relation / Weight / Capacity thực tế. **Focus** làm mờ cạnh ngoài đường tấn công/cut. Màu node biểu thị loại node; vòng cam đánh dấu node được chọn.
 
 JSON mặc định được tìm ở project → `data/graph.json` cạnh chương trình → `graph.json` cạnh chương trình → `data/graph.json` trong working directory. Không copy JSON tự động vào build folder, nên sửa/thay dataset không cần rebuild. GUI đọc đường dẫn UTF-8 bằng `std::filesystem::u8path`; font Arial trên Windows hoặc DejaVu Sans trên Linux hỗ trợ tiếng Việt. Dataset dùng bộ chữ khác cần font phù hợp; font mặc định raylib là fallback.
+
+Bảng so sánh phân biệt **Spent** (token đã dùng trên hành trình thực tế), **Tokens** (token còn lại), **S-T** (kết nối Graph, không xét budget), **Traveled path** (các node đã đến), **Stop** (Node ID đang đứng) và **Need** (cost toàn bộ đường Dijkstra, N/A khi NO_PATH). Token còn lại được hiển thị cho mọi trạng thái. Không tự trừ hết token: nếu còn 4 nhưng cạnh cần 5 thì giữ 4; nếu mọi cạnh ra Source bị Patch thì giữ nguyên budget. Dòng thông báo ghi lý do dừng.
 
 ### Cấu trúc dễ giải thích
 
@@ -118,8 +120,10 @@ Chỉ có **5 file GUI**, hai class:
 - `gui/SimulationUI.h/.cpp`: giữ graph gốc/graph hiện tại, xử lý các nút và gọi Core, hiển thị kết quả.
 - `gui/GraphView.h/.cpp`: chia node vào 5 cột, vẽ cạnh có hướng, chọn node, zoom/pan và highlight. Không chứa Dijkstra hoặc Min-Cut.
 
-Các hàm Attack/Defend/Re-Attack nhận tham số đã chọn trong GUI và lưu kết quả trả về từ Core; Apply Patch dùng vector Edge ID đã chọn. Graph gốc được copy để Reset và xem Before. Hai vector vị trí và cạnh trong GraphView chỉ phục vụ vẽ, vì vậy đổi trạng thái blocked không làm node nhảy vị trí. Cạnh thường là đoạn thẳng có mũi tên, cạnh song song/đối hướng được dịch nhẹ, cạnh tự nối được vẽ bằng các đoạn thẳng quanh node. Kéo node chỉ đổi tọa độ giao diện, không đổi Graph, Weight hay Capacity. Vị trí đã kéo giữ khi Attack, Patch, Before/After và Reset; Import dataset sẽ bố trí lại. Fit căn camera theo vị trí hiện tại, không tự sắp xếp lại node. Tọa độ không được ghi vào JSON.
+Trong Core, `AttackResult.path` giữ đường Dijkstra dự kiến, `traveledPath` giữ phần thực sự đã đi và cost đã trả, `remainingToken` là token thực còn lại, `stopReason` ghi lý do dừng. `hackerSimulation()` dùng vòng for và `canMove()` để kiểm tra từng cạnh; Dijkstra/Min-Cut giữ nguyên thuật toán. Tham số `previousRoute` tùy chọn chỉ dùng khi Re-Attack NO_PATH để thử lại đường cũ tới điểm bị chặn. GUI dùng `traveledPath` để vẽ, không tự tính thuật toán. Các hàm Attack/Defend/Re-Attack nhận tham số đã chọn trong GUI và lưu kết quả trả về từ Core; Apply Patch dùng vector Edge ID đã chọn. Graph gốc được copy để Reset và xem Before. Hai vector vị trí và cạnh trong GraphView chỉ phục vụ vẽ, vì vậy đổi trạng thái blocked không làm node nhảy vị trí. Cạnh thường là đoạn thẳng có mũi tên, cạnh song song/đối hướng được dịch nhẹ, cạnh tự nối được vẽ bằng các đoạn thẳng quanh node. Kéo node chỉ đổi tọa độ giao diện, không đổi Graph, Weight hay Capacity. Vị trí đã kéo giữ khi Attack, Patch, Before/After và Reset; Import dataset sẽ bố trí lại. Fit căn camera theo vị trí hiện tại, không tự sắp xếp lại node. Tọa độ không được ghi vào JSON.
 
 ### Kiểm chứng bản chuyển đổi
 
 Đã build native Linux, cấu hình tải raylib tự động và build cross-compile Windows bằng MinGW-w64 13. Đã chạy cửa sổ raylib thực tế trên màn hình ảo Linux, kiểm tra baseline, Patch toàn bộ/một phần, budget thiếu/tràn, Source = Target, NO_PATH, Import sai giữ trạng thái, dataset ID khác, cạnh capacity 0/parallel, Reset, kéo node ở nhiều mức zoom, pan và vị trí Before/After. Chưa chạy trực tiếp trên Windows/CLion của người dùng; cross-compile không thay thế kiểm chứng runtime trên máy đó. Không thêm thư mục `tests/` hoặc thay Core/dataset chính.
+
+Kiểm tra dừng hacker: budget 27 trên đường 18 → 3 (Need 28) dừng ở 6, Spent 23, còn 4; full Min-Cut giữ hacker ở 18, Spent 0; dataset tuyến 100 → 250 → 900 bị Patch cạnh cuối thì Re-Attack đi đến 250 rồi dừng. Đã kiểm tra budget 0..40, zero-weight khi token 0, budget INT64_MAX, thiếu cạnh, Before/After và marker GUI.
