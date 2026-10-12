@@ -63,3 +63,39 @@ JSON có `nodes` và `edges` là array. Mỗi node cần `id`, `name`, `type`, `
 - `runSimulation(Graph&, ...)` cập nhật Graph truyền vào. Để chạy các scenario độc lập, giữ `const Graph initial = loadDataset(...)`, rồi dùng `Graph scenario = initial` cho mỗi lần gọi; hoặc load lại file. Không tự mở lại các cạnh vốn đã blocked trong dataset.
 - Mỗi lần chạy CLI load lại dataset, không dùng trạng thái patch lần trước.
 - Các báo cáo trong `docs/` là tài liệu lịch sử; repo hiện không có thư mục test hoặc reference được nhắc trong báo cáo cũ.
+
+
+## Qt GUI — bước đầu của Phase 3
+
+GUI hiện có giao diện nền tối với ba panel, Import JSON qua loader Core, Explorer theo 5 loại node, tìm theo ID/name, chọn Source/Target và nhập budget trong miền int64_t. Chọn node rồi dùng `Use as Source` / `Use as Target`, hoặc chọn trực tiếp từ dropdown.
+
+Bước này chưa vẽ graph hoặc chạy mô phỏng. Các nút Attack/Defend/Re-Attack/Reset đang disabled; bảng Before/After hiển thị `--` cho kết quả chưa có. Không hiển thị kết quả giả. Import lỗi giữ dataset đang mở; đường dẫn Unicode được đọc qua QFile rồi truyền stream vào loader Core. Dataset rỗng vẫn import được và hiển thị warning, nhưng không có node để chọn.
+
+Chỉ thêm `gui/main.cpp` và `gui/MainWindow.h/.cpp`. GraphView sẽ được thêm ở bước vẽ graph. Core và CLI không phụ thuộc Qt.
+
+### CLion Windows / MinGW
+
+1. Cài Qt 6 Widgets bản **MinGW 64-bit** và compiler tương ứng với bộ Qt. Không chọn bộ MSVC khi build bằng MinGW.
+2. Trong **Settings → Build, Execution, Deployment → Toolchains**, chọn compiler MinGW đi kèm bộ Qt.
+3. Trong **CMake → CMake options**, thêm:
+
+```text
+-DBUILD_GUI=ON -DCMAKE_PREFIX_PATH=C:/Qt/<version>/mingw_64
+```
+
+Thay `<version>` bằng phiên bản đã cài, hoặc dùng đường dẫn Qt thực tế của bạn. Nếu đường dẫn có khoảng trắng, đặt giá trị trong dấu ngoặc kép. Ví dụ Qt 6.8 dùng bộ MinGW-w64 13.1 tương ứng.
+
+4. Reset Cache and Reload Project, Build target **AttackGraphGUI**.
+5. Trong Run Configuration chọn executable **AttackGraphGUI**. Thêm thư mục `bin` của Qt và MinGW vào `PATH` của Run Configuration để tìm DLL và plugin Qt khi chạy.
+6. Run rồi bấm **Import JSON**, chọn `data/graph.json`. Có thể truyền đường dẫn JSON vào Program arguments để mở khi khởi động.
+
+Nếu thiếu `Qt6Config.cmake`, kiểm tra CMAKE_PREFIX_PATH trỏ đến folder `mingw_64`, không phải folder Tools/MinGW. Nếu báo thiếu DLL hoặc plugin `windows`, kiểm tra đúng bộ Qt và môi trường PATH. Chạy trên máy khác cần DLL/plugin tương ứng; chưa đóng gói bản phát hành trong bước này.
+
+### Build bằng terminal
+
+```sh
+cmake -S . -B build-gui -DBUILD_GUI=ON -DCMAKE_PREFIX_PATH="C:/Qt/<version>/mingw_64"
+cmake --build build-gui --target AttackGraphGUI --parallel 2
+```
+
+Mặc định `BUILD_GUI=OFF`: cách build CLI hiện tại vẫn hoạt động trên máy chưa cài Qt. Bật GUI mà chưa có Qt sẽ báo lỗi cấu hình rõ ràng.
