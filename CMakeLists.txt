@@ -78,6 +78,8 @@ if(BUILD_GUI)
         gui/main.cpp
         gui/MainWindow.cpp
         gui/MainWindow.h
+        gui/GraphView.cpp
+        gui/GraphView.h
     )
 
     set_target_properties(AttackGraphGUI PROPERTIES AUTOMOC ON)
