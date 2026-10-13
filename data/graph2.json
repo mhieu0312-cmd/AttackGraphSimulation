@@ -1,0 +1,35 @@
+{
+  "metadata": {
+    "name": "Graph 2 - Import validation scenario",
+    "description": "Synthetic academic dataset with non-contiguous node and edge IDs, five node types and alternative attack routes.",
+    "source_target_test_policy": "Source 101, Target 501, Budget 15. Try Budget 8 for OVER_BUDGET. Patch edge 11 for an alternative route.",
+    "weight_policy": "Synthetic attack cost; independent from capacity.",
+    "capacity_policy": "Synthetic defense patch cost; not measured real-world cost."
+  },
+  "nodes": [
+    {"id": 101, "name": "PC_Visitor", "type": "ENTRY", "assets": 0},
+    {"id": 201, "name": "PC_Sales", "type": "ENDPOINT", "assets": 10},
+    {"id": 205, "name": "PC_Technical", "type": "ENDPOINT", "assets": 10},
+    {"id": 301, "name": "User_Sales", "type": "IDENTITY", "assets": 20},
+    {"id": 307, "name": "User_Technical", "type": "IDENTITY", "assets": 20},
+    {"id": 777, "name": "Group_Technical", "type": "IDENTITY", "assets": 20},
+    {"id": 401, "name": "Server_Sales", "type": "CRITICAL_SYSTEM", "assets": 50},
+    {"id": 409, "name": "Server_Technical", "type": "CRITICAL_SYSTEM", "assets": 50},
+    {"id": 501, "name": "OrdersDB", "type": "TARGET", "assets": 100},
+    {"id": 509, "name": "BackupStorage", "type": "TARGET", "assets": 100}
+  ],
+  "edges": [
+    {"id": 11, "from": 101, "to": 201, "weight": 2, "capacity": 2, "relation": "HasSession", "blocked": false},
+    {"id": 25, "from": 101, "to": 205, "weight": 3, "capacity": 2, "relation": "HasSession", "blocked": false},
+    {"id": 41, "from": 201, "to": 301, "weight": 2, "capacity": 3, "relation": "HasSession", "blocked": false},
+    {"id": 57, "from": 205, "to": 307, "weight": 2, "capacity": 3, "relation": "HasSession", "blocked": false},
+    {"id": 83, "from": 301, "to": 401, "weight": 2, "capacity": 5, "relation": "AdminTo", "blocked": false},
+    {"id": 96, "from": 307, "to": 409, "weight": 2, "capacity": 5, "relation": "AdminTo", "blocked": false},
+    {"id": 120, "from": 401, "to": 501, "weight": 3, "capacity": 3, "relation": "AccessTo", "blocked": false},
+    {"id": 145, "from": 409, "to": 501, "weight": 5, "capacity": 3, "relation": "AccessTo", "blocked": false},
+    {"id": 181, "from": 401, "to": 509, "weight": 4, "capacity": 3, "relation": "AccessTo", "blocked": false},
+    {"id": 210, "from": 409, "to": 509, "weight": 2, "capacity": 3, "relation": "AccessTo", "blocked": false},
+    {"id": 260, "from": 307, "to": 777, "weight": 0, "capacity": 1, "relation": "MemberOf", "blocked": false},
+    {"id": 315, "from": 777, "to": 409, "weight": 4, "capacity": 3, "relation": "AccessTo", "blocked": false}
+  ]
+}
