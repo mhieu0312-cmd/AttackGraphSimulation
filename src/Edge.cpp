@@ -2,33 +2,9 @@
 
 using namespace std;
 
-
-// =========================
-// CONSTRUCTOR
-// =========================
-
-Edge::Edge(
-    int from,
-    int to,
-    int weight,
-    string relation,
-    bool blocked,
-    int id,
-    int capacity
-)
-    : from(from),
-      to(to),
-      weight(weight),
-      relation(relation),
-      blocked(blocked),
-      id(id),
-      capacity(capacity) {
-}
-
-
-// =========================
-// GETTER
-// =========================
+Edge::Edge(int from, int to, int weight, string relation, bool blocked, int id, int capacity)
+    : from(from), to(to), weight(weight), relation(relation), blocked(blocked), id(id),
+      capacity(capacity) {}
 
 int Edge::getID() const {
     return id;
@@ -57,11 +33,6 @@ bool Edge::isBlocked() const {
 int Edge::getCapacity() const {
     return capacity;
 }
-
-
-// =========================
-// SETTER
-// =========================
 
 void Edge::setBlocked(bool value) {
     blocked = value;

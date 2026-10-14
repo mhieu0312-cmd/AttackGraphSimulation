@@ -10,7 +10,6 @@ using namespace std;
 using nlohmann::json;
 
 namespace {
-
 void validateFields(const json& object, const vector<string>& allowedFields) {
     if (!object.is_object()) {
         throw invalid_argument("Ban ghi phai la object");
@@ -69,7 +68,7 @@ json readJson(istream& input) {
     return json::parse(input, checkKeys);
 }
 
-}
+} // namespace
 
 Graph loadDataset(istream& input) {
     Graph graph;
@@ -92,7 +91,6 @@ Graph loadDataset(istream& input) {
             location = "nodes[" + to_string(index) + "]";
             const json& nodeData = data.at("nodes").at(index);
             validateFields(nodeData, {"id", "name", "type", "assets"});
-
             int id = integerField(nodeData, "id");
             string name = nodeData.at("name").get<string>();
             NodeType type = nodeTypeFromString(nodeData.at("type").get<string>());
@@ -103,8 +101,8 @@ Graph loadDataset(istream& input) {
         for (size_t index = 0; index < data.at("edges").size(); ++index) {
             location = "edges[" + to_string(index) + "]";
             const json& edgeData = data.at("edges").at(index);
-            validateFields(edgeData, {"id", "from", "to", "weight", "capacity", "relation", "blocked"});
-
+            validateFields(edgeData,
+                           {"id", "from", "to", "weight", "capacity", "relation", "blocked"});
             int id = integerField(edgeData, "id");
             int from = integerField(edgeData, "from");
             int to = integerField(edgeData, "to");

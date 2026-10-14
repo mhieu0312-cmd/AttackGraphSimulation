@@ -3,16 +3,11 @@
 #include "Graph.h"
 
 class Defender {
-
-private:
+  private:
     Graph& graph;
 
-public:
-
-    // Constructor
-    explicit Defender(Graph& graph)
-        : graph(graph) {
-    }
+  public:
+    explicit Defender(Graph& graph) : graph(graph) {}
 
     // Kiem tra source co den duoc target khong
     bool isReachable(int source, int target) const;

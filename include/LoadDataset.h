@@ -7,11 +7,5 @@
 using namespace std;
 
 // Doc dataset tu stream
-Graph loadDataset(
-    istream& input
-);
-
-
-Graph loadDataset(
-    const string& filename
-);
+Graph loadDataset(istream& input);
+Graph loadDataset(const string& filename);

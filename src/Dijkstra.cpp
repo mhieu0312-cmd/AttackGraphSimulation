@@ -8,24 +8,14 @@
 
 using namespace std;
 
-
-// =========================
 // TIM NODE CO DISTANCE NHO NHAT
-// =========================
 
 namespace {
-
-size_t minDistance(
-    const vector<int64_t>& distance,
-    const vector<bool>& visited
-) {
-
+size_t minDistance(const vector<int64_t>& distance, const vector<bool>& visited) {
     size_t index = distance.size();
-
     int64_t best = numeric_limits<int64_t>::max();
 
     for (size_t i = 0; i < distance.size(); ++i) {
-
         if (!visited[i] && distance[i] < best) {
             best = distance[i];
             index = i;
@@ -35,32 +25,17 @@ size_t minDistance(
     return index;
 }
 
-}
+} // namespace
 
-
-// =========================
 // DIJKSTRA
-// =========================
 
-PathResult dijkstra(
-    const Graph& graph,
-    int start,
-    int target
-) {
-
-    // Kiem tra start va target
-    if (graph.getNode(start) == nullptr ||
-        graph.getNode(target) == nullptr) {
-
-        throw invalid_argument(
-            "Dijkstra: source/target khong ton tai"
-        );
+PathResult dijkstra(const Graph& graph, int start, int target) {
+    if (graph.getNode(start) == nullptr || graph.getNode(target) == nullptr) {
+        throw invalid_argument("Dijkstra: source/target khong ton tai");
     }
 
     const vector<Node>& nodes = graph.getNodes();
-
     size_t n = nodes.size();
-
     int64_t inf = numeric_limits<int64_t>::max();
 
     // Map Node ID sang vi tri trong vector
@@ -70,21 +45,12 @@ PathResult dijkstra(
         index[nodes[i].getID()] = i;
     }
 
-    // Khoi tao distance
     vector<int64_t> distance(n, inf);
-
-    // Danh dau node da duyet
     vector<bool> visited(n, false);
-
-    // Luu edge dung de di den moi node
     vector<int> parentEdge(n, -1);
-
     distance[index.at(start)] = 0;
 
-
-    // Duyet tung node
     for (size_t count = 0; count < n; ++count) {
-
         size_t u = minDistance(distance, visited);
 
         // Khong con node nao di duoc
@@ -94,135 +60,96 @@ PathResult dijkstra(
 
         visited[u] = true;
 
-        // Da den target
         if (nodes[u].getID() == target) {
             break;
         }
 
-
-        // Duyet cac edge di ra
-        for (const Edge* edge :
-             graph.getOutGoingEdge(nodes[u].getID())) {
-
+        for (const Edge* edge : graph.getOutGoingEdge(nodes[u].getID())) {
             size_t v = index.at(edge->getTo());
 
-            // Node da duyet thi bo qua
             if (visited[v]) {
                 continue;
             }
 
             // Kiem tra tran so
-            if (distance[u] >
-                inf - edge->getWeight()) {
-
-                throw overflow_error(
-                    "Dijkstra cost overflow"
-                );
+            if (distance[u] > inf - edge->getWeight()) {
+                throw overflow_error("Dijkstra cost overflow");
             }
 
-            int64_t newCost =
-                distance[u] + edge->getWeight();
+            int64_t newCost = distance[u] + edge->getWeight();
 
             // Tim duoc duong re hon
             if (newCost < distance[v]) {
-
                 distance[v] = newCost;
-
                 parentEdge[v] = edge->getID();
             }
         }
     }
-
 
     // Khong co duong den target
     if (distance[index.at(target)] == inf) {
         return {};
     }
 
-
-    // Tao ket qua
     PathResult result;
-
     result.reachable = true;
-
-    result.totalCost =
-        distance[index.at(target)];
-
+    result.totalCost = distance[index.at(target)];
 
     // Truy nguoc duong di
     int current = target;
-
     result.nodes.push_back(current);
 
-
     while (current != start) {
-
-        int edgeId =
-            parentEdge[index.at(current)];
-
-        const Edge* edge =
-            graph.getEdge(edgeId);
+        int edgeId = parentEdge[index.at(current)];
+        const Edge* edge = graph.getEdge(edgeId);
 
         if (edge == nullptr) {
-            throw logic_error(
-                "Dijkstra: parent edge khong hop le"
-            );
+            throw logic_error("Dijkstra: parent edge khong hop le");
         }
 
-        result.edgeIds.push_back(
-            edge->getID()
-        );
-
+        result.edgeIds.push_back(edge->getID());
         current = edge->getFrom();
-
         result.nodes.push_back(current);
     }
 
-
     // Dao lai thanh start -> target
-    reverse(
-        result.nodes.begin(),
-        result.nodes.end()
-    );
-
-    reverse(
-        result.edgeIds.begin(),
-        result.edgeIds.end()
-    );
-
+    reverse(result.nodes.begin(), result.nodes.end());
+    reverse(result.edgeIds.begin(), result.edgeIds.end());
     return result;
 }
 
-
-// =========================
 // MO PHONG HACKER
-// =========================
 
-AttackResult hackerSimulation(
-    const Graph& graph,
-    int start,
-    int target,
-    int64_t budget,
-    const PathResult* previousRoute
-) {
-    if (budget < 0) throw invalid_argument("Budget phai >= 0");
+AttackResult hackerSimulation(const Graph& graph, int start, int target, int64_t budget,
+                              const PathResult* previousRoute) {
+    if (budget < 0) {
+        throw invalid_argument("Budget phai >= 0");
+    }
 
     AttackResult result;
     result.initialBudget = budget;
     result.path = dijkstra(graph, start, target);
-    if (!result.path.reachable) result.status = AttackStatus::NO_PATH;
-    else if (result.path.totalCost > budget) result.status = AttackStatus::OVER_BUDGET;
-    else result.status = AttackStatus::SUCCESS;
+    if (!result.path.reachable) {
+        result.status = AttackStatus::NO_PATH;
+    } else if (result.path.totalCost > budget) {
+        result.status = AttackStatus::OVER_BUDGET;
+    } else {
+        result.status = AttackStatus::SUCCESS;
+    }
 
     const PathResult* route = &result.path;
-    if (!result.path.reachable && previousRoute != nullptr) route = previousRoute;
+    if (!result.path.reachable && previousRoute != nullptr) {
+        route = previousRoute;
+    }
     int current = start;
     int64_t remaining = budget;
     result.traveledPath.nodes.push_back(current);
     result.stopReason = "NO_ROUTE";
 
     for (int edgeId : route->edgeIds) {
-        if (current == target) break;
+        if (current == target) {
+            break;
+        }
         const Edge* edge = graph.getEdge(edgeId);
         if (edge == nullptr) {
             result.stopReason = "EDGE_MISSING";
@@ -243,22 +170,16 @@ AttackResult hackerSimulation(
         result.traveledPath.nodes.push_back(current);
     }
     result.traveledPath.reachable = current == target;
-    if (result.traveledPath.reachable) result.stopReason = "TARGET_REACHED";
+    if (result.traveledPath.reachable) {
+        result.stopReason = "TARGET_REACHED";
+    }
     result.remainingToken = remaining;
     return result;
 }
 
-
-// =========================
 // DIEU KIEN DI CHUYEN (CAN MOVE)
-// =========================
 
-bool canMove(
-    const Graph& graph,
-    int edgeId,
-    int64_t remainingToken
-) {
-    // Token am khong the di chuyen
+bool canMove(const Graph& graph, int edgeId, int64_t remainingToken) {
     if (remainingToken < 0) {
         return false;
     }
@@ -274,20 +195,10 @@ bool canMove(
     return remainingToken >= edge->getWeight();
 }
 
-
-// =========================
 // IN DUONG DI
-// =========================
 
-void printPath(
-    const PathResult& path,
-    ostream& out
-) {
-
-    for (size_t i = 0;
-         i < path.nodes.size();
-         ++i) {
-
+void printPath(const PathResult& path, ostream& out) {
+    for (size_t i = 0; i < path.nodes.size(); ++i) {
         if (i > 0) {
             out << " -> ";
         }
@@ -296,40 +207,42 @@ void printPath(
     }
 }
 
-
-// =========================
 // IN KET QUA ATTACK
-// =========================
 
 void printAttack(const AttackResult& attack, ostream& out) {
     out << "Budget khoi tao: " << attack.initialBudget << '\n';
     out << "Path da di: ";
     printPath(attack.traveledPath, out);
     out << "\nCost da dung: " << attack.traveledPath.totalCost << "\nCost den Target: ";
-    if (attack.path.reachable) out << attack.path.totalCost;
-    else out << "N/A";
+    if (attack.path.reachable) {
+        out << attack.path.totalCost;
+    } else {
+        out << "N/A";
+    }
     out << "\nEdge IDs da di:";
-    for (int id : attack.traveledPath.edgeIds) out << ' ' << id;
+    for (int id : attack.traveledPath.edgeIds) {
+        out << ' ' << id;
+    }
     out << "\nTrang thai: ";
-    if (attack.status == AttackStatus::SUCCESS) out << "SUCCESS";
-    else if (attack.status == AttackStatus::OVER_BUDGET) out << "OVER_BUDGET";
-    else out << "NO_PATH";
+    if (attack.status == AttackStatus::SUCCESS) {
+        out << "SUCCESS";
+    } else if (attack.status == AttackStatus::OVER_BUDGET) {
+        out << "OVER_BUDGET";
+    } else {
+        out << "NO_PATH";
+    }
     out << "\nDung lai: " << attack.stopReason << "\nToken con lai: ";
-    if (attack.remainingToken) out << *attack.remainingToken;
-    else out << "N/A";
+    if (attack.remainingToken) {
+        out << *attack.remainingToken;
+    } else {
+        out << "N/A";
+    }
     out << '\n';
 }
 
-
-// =========================
 // IN CHI TIET (TRUC QUAN KEM TEN NODE)
-// =========================
 
-void printPathDetailed(
-    const Graph& graph,
-    const PathResult& path,
-    ostream& out
-) {
+void printPathDetailed(const Graph& graph, const PathResult& path, ostream& out) {
     if (path.nodes.empty()) {
         out << "(khong co duong di)\n";
         return;
@@ -337,10 +250,9 @@ void printPathDetailed(
 
     if (path.nodes.size() == 1) {
         const Node* node = graph.getNode(path.nodes[0]);
-        out << "  [1] "
-            << (node ? node->getName() : ("Node " + to_string(path.nodes[0])))
-            << " (ID " << path.nodes[0] << ") "
-            << (path.reachable ? "[TARGET]" : "[DUNG LAI]") << '\n';
+        out << "  [1] " << (node ? node->getName() : ("Node " + to_string(path.nodes[0])))
+            << " (ID " << path.nodes[0] << ") " << (path.reachable ? "[TARGET]" : "[DUNG LAI]")
+            << '\n';
         return;
     }
 
@@ -348,16 +260,13 @@ void printPathDetailed(
         int u = path.nodes[i];
         int v = path.nodes[i + 1];
         int edgeId = path.edgeIds[i];
-
         const Node* uNode = graph.getNode(u);
         const Node* vNode = graph.getNode(v);
         const Edge* edge = graph.getEdge(edgeId);
-
         string uName = uNode ? uNode->getName() : ("Node " + to_string(u));
         string vName = vNode ? vNode->getName() : ("Node " + to_string(v));
         string rel = edge ? edge->getRelation() : "Edge";
         int64_t w = edge ? edge->getWeight() : 0;
-
         out << "  [" << (i + 1) << "] " << uName << " (ID " << u << ")\n";
         out << "      ---(" << rel << ", Cost: " << w << ", Edge ID: " << edgeId << ")--->\n";
 

@@ -11,13 +11,9 @@
 
 using namespace std;
 
-
-// =========================
 // KET QUA MO PHONG
-// =========================
 
 struct SimulationResult {
-
     // Ket qua hacker truoc va sau khi phong thu
     AttackResult before;
     AttackResult after;
@@ -37,17 +33,9 @@ struct SimulationResult {
     size_t newlyBlockedEdges = 0;
 };
 
-
-// =========================
 // CHAY MO PHONG
-// =========================
 
 // Chay Attack -> Defense -> Attack lai. Graph truyen vao giu cac canh da patch.
 // Moi scenario doc lap phai copy graph ban dau hoac load lai dataset.
-SimulationResult runSimulation(
-    Graph& graph,
-    int source,
-    int target,
-    int64_t budget,
-    optional<vector<int>> manualPatch = nullopt
-);
+SimulationResult runSimulation(Graph& graph, int source, int target, int64_t budget,
+                               optional<vector<int>> manualPatch = nullopt);
