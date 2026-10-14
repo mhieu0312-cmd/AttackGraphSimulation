@@ -1,16 +1,12 @@
 #include "Graph.h"
 
-#include <algorithm>
 #include <cctype>
 #include <unordered_set>
 #include <stdexcept>
 
 using namespace std;
 
-
-// =========================
 // KIEM TRA NODE
-// =========================
 
 void Graph::requireNode(int id) const {
     if (getNode(id) == nullptr) {
@@ -18,13 +14,9 @@ void Graph::requireNode(int id) const {
     }
 }
 
-
-// =========================
 // TIM NODE / EDGE
-// =========================
 
 const Node* Graph::getNode(int id) const {
-
     for (const Node& node : Nodes) {
         if (node.getID() == id) {
             return &node;
@@ -35,7 +27,6 @@ const Node* Graph::getNode(int id) const {
 }
 
 const Edge* Graph::getEdge(int id) const {
-
     for (const Edge& edge : Edges) {
         if (edge.getID() == id) {
             return &edge;
@@ -45,20 +36,22 @@ const Edge* Graph::getEdge(int id) const {
     return nullptr;
 }
 
-
-// =========================
 // THEM NODE
-// =========================
 
 void Graph::addNode(Node node) {
-
     if (node.getID() < 0 || getNode(node.getID()) != nullptr) {
         throw invalid_argument("Node ID khong hop le");
     }
 
     const string name = node.getName();
-    if (name.empty() || all_of(name.begin(), name.end(),
-            [](unsigned char c) { return std::isspace(c) != 0; })) {
+    bool emptyName = true;
+    for (unsigned char character : name) {
+        if (isspace(character) == 0) {
+            emptyName = false;
+            break;
+        }
+    }
+    if (emptyName) {
         throw invalid_argument("Node name rong");
     }
 
@@ -66,18 +59,14 @@ void Graph::addNode(Node node) {
         throw invalid_argument("Assets phai >= 0");
     }
 
-    // Reject invalid enum values even when nodes are added directly.
+    // Kiem tra NodeType truoc khi them node.
     nodeTypeToString(node.getType());
     Nodes.push_back(node);
 }
 
-
-// =========================
 // THEM EDGE
-// =========================
 
 void Graph::addEdge(Edge edge) {
-
     requireNode(edge.getFrom());
     requireNode(edge.getTo());
 
@@ -94,27 +83,21 @@ void Graph::addEdge(Edge edge) {
     }
 
     const string relation = edge.getRelation();
-    if (relation != "HasSession" && relation != "AdminTo" &&
-        relation != "MemberOf" && relation != "AccessTo") {
+    if (relation != "HasSession" && relation != "AdminTo" && relation != "MemberOf" &&
+        relation != "AccessTo") {
         throw invalid_argument("Relation khong hop le: " + relation);
     }
 
     Edges.push_back(edge);
 }
 
-
-// =========================
 // TIM CAC EDGE DI RA
-// =========================
 
 vector<const Edge*> Graph::getOutGoingEdge(int id) const {
-
     requireNode(id);
-
     vector<const Edge*> result;
 
     for (const Edge& edge : Edges) {
-
         if (edge.getFrom() == id && !edge.isBlocked()) {
             result.push_back(&edge);
         }
@@ -123,19 +106,13 @@ vector<const Edge*> Graph::getOutGoingEdge(int id) const {
     return result;
 }
 
-
-// =========================
 // TIM NODE KE
-// =========================
 
 vector<int> Graph::getNeighbor(int id) const {
-
     requireNode(id);
-
     vector<int> result;
 
     for (const Edge& edge : Edges) {
-
         if (edge.getFrom() == id && !edge.isBlocked()) {
             result.push_back(edge.getTo());
         }
@@ -144,13 +121,9 @@ vector<int> Graph::getNeighbor(int id) const {
     return result;
 }
 
-
-// =========================
 // BLOCK / UNBLOCK EDGE
-// =========================
 
 bool Graph::isBlocked(int edgeId) const {
-
     const Edge* edge = getEdge(edgeId);
 
     if (edge == nullptr) {
@@ -161,9 +134,7 @@ bool Graph::isBlocked(int edgeId) const {
 }
 
 void Graph::blockEdge(int edgeId) {
-
     for (Edge& edge : Edges) {
-
         if (edge.getID() == edgeId) {
             edge.setBlocked(true);
             return;
@@ -174,9 +145,7 @@ void Graph::blockEdge(int edgeId) {
 }
 
 void Graph::unblockEdge(int edgeId) {
-
     for (Edge& edge : Edges) {
-
         if (edge.getID() == edgeId) {
             edge.setBlocked(false);
             return;
@@ -187,7 +156,6 @@ void Graph::unblockEdge(int edgeId) {
 }
 
 void Graph::blockEdges(const vector<int>& edgeIds) {
-
     for (int id : edgeIds) {
         if (getEdge(id) == nullptr) {
             throw invalid_argument("Khong co edge ID " + to_string(id));
@@ -199,24 +167,17 @@ void Graph::blockEdges(const vector<int>& edgeIds) {
     }
 }
 
-
-// =========================
 // THONG KE GRAPH
-// =========================
 
 GraphStatistics Graph::statistics() const {
-
     GraphStatistics result;
-
     result.nodes = Nodes.size();
     result.edges = Edges.size();
 
     for (const Edge& edge : Edges) {
-
         if (edge.isBlocked()) {
             result.blockedEdges++;
-        }
-        else {
+        } else {
             result.activeEdges++;
         }
     }
@@ -224,13 +185,9 @@ GraphStatistics Graph::statistics() const {
     return result;
 }
 
-
-// =========================
 // KIEM TRA DATASET
-// =========================
 
 vector<string> Graph::validationWarnings() const {
-
     vector<string> result;
 
     if (Nodes.empty()) {
@@ -242,7 +199,6 @@ vector<string> Graph::validationWarnings() const {
     bool hasTarget = false;
 
     for (const Node& node : Nodes) {
-
         if (node.getType() == NodeType::ENTRY) {
             hasEntry = true;
         }
@@ -260,28 +216,26 @@ vector<string> Graph::validationWarnings() const {
         result.push_back("Khong co node TARGET");
     }
 
-    // Isolation concerns the stored topology, including blocked edges.
+    // Node co lap: khong co canh noi, ke ca canh da block.
     unordered_set<int> incident;
-    for (const auto& edge : Edges) {
+    for (const Edge& edge : Edges) {
         incident.insert(edge.getFrom());
         incident.insert(edge.getTo());
     }
     unordered_set<int> reachable;
-    for (const auto& node : Nodes) {
+    for (const Node& node : Nodes) {
         if (node.getType() == NodeType::ENTRY) {
             for (int id : dfs(node.getID())) {
                 reachable.insert(id);
             }
         }
     }
-    for (const auto& node : Nodes) {
+    for (const Node& node : Nodes) {
         if (incident.count(node.getID()) == 0) {
             result.push_back("Node co lap ID " + to_string(node.getID()));
         }
-        if (node.getType() == NodeType::TARGET &&
-            reachable.count(node.getID()) == 0) {
-            result.push_back("TARGET khong reachable tu ENTRY: ID " +
-                             to_string(node.getID()));
+        if (node.getType() == NodeType::TARGET && reachable.count(node.getID()) == 0) {
+            result.push_back("TARGET khong reachable tu ENTRY: ID " + to_string(node.getID()));
         }
     }
 
@@ -296,15 +250,17 @@ vector<int> Graph::dfs(int start) const {
     while (!stack.empty()) {
         const int current = stack.back();
         stack.pop_back();
-        if (!visited.insert(current).second) {
+        if (visited.count(current) != 0) {
             continue;
         }
+        visited.insert(current);
         order.push_back(current);
-        const auto edges = getOutGoingEdge(current);
-        // Reverse push preserves the order in which outgoing edges were added.
-        for (auto it = edges.rbegin(); it != edges.rend(); ++it) {
-            if (visited.count((*it)->getTo()) == 0) {
-                stack.push_back((*it)->getTo());
+        vector<const Edge*> edges = getOutGoingEdge(current);
+        // Dua vao stack theo thu tu nguoc de DFS duyet dung thu tu them canh.
+        for (size_t i = edges.size(); i > 0; --i) {
+            int next = edges[i - 1]->getTo();
+            if (visited.count(next) == 0) {
+                stack.push_back(next);
             }
         }
     }

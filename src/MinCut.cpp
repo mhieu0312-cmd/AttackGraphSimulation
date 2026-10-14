@@ -7,105 +7,122 @@
 #include <unordered_map>
 #include <unordered_set>
 
+using namespace std;
+
 namespace {
 struct ResidualArc {
-    std::size_t from;
-    std::size_t to;
-    std::int64_t capacity;
+    size_t from;
+    size_t to;
+    int64_t capacity;
 };
 
-std::int64_t checkedAdd(std::int64_t a, std::int64_t b) {
-    if (b < 0 || a > std::numeric_limits<std::int64_t>::max() - b) {
-        throw std::overflow_error("MinCut: int64_t capacity/flow overflow");
+int64_t checkedAdd(int64_t a, int64_t b) {
+    if (b < 0 || a > numeric_limits<int64_t>::max() - b) {
+        throw overflow_error("MinCut: int64_t capacity/flow overflow");
     }
     return a + b;
 }
-}
 
-MinCutResult minimumSTCut(const Graph& graph, int source, int target) {
-    if (!graph.getNode(source)) {
-        throw std::invalid_argument("MinCut: source ID khong ton tai: " + std::to_string(source));
-    }
-    if (!graph.getNode(target)) {
-        throw std::invalid_argument("MinCut: target ID khong ton tai: " + std::to_string(target));
-    }
-    if (source == target) {
-        throw std::invalid_argument("MinCut: source phai khac target");
-    }
-    MinCutResult result;
-    const auto originalReachable = graph.dfs(source);
-    if (std::find(originalReachable.begin(), originalReachable.end(), target) == originalReachable.end()) {
-        return result; // No active topological path: no patch is needed.
-    }
+// BFS tren mang du, luu canh di den moi node de truy nguoc duong tang luong.
+vector<bool> bfsResidual(const vector<ResidualArc>& arcs, const vector<vector<size_t>>& outgoing,
+                         size_t source, vector<size_t>& parent) {
+    fill(parent.begin(), parent.end(), numeric_limits<size_t>::max());
+    vector<bool> reached(outgoing.size(), false);
+    queue<size_t> pending;
+    reached[source] = true;
+    pending.push(source);
 
-    std::unordered_map<int, std::size_t> index;
-    for (const auto& node : graph.getNodes()) {
-        const auto next = index.size();
-        index.emplace(node.getID(), next);
-    }
-    const auto n = index.size();
-    const auto s = index.at(source);
-    const auto t = index.at(target);
-    std::vector<ResidualArc> arcs;
-    std::vector<std::vector<std::size_t>> outgoing(n);
-    for (const auto& edge : graph.getEdges()) {
-        if (edge.isBlocked()) continue;
-        const std::int64_t capacity = edge.getCapacity();
-        if (capacity < 0) {
-            throw std::invalid_argument("MinCut: capacity phai >= 0");
-        }
-        const auto u = index.at(edge.getFrom());
-        const auto v = index.at(edge.getTo());
-        // Each original edge gets its own pair. XOR 1 finds the paired arc,
-        // even for parallel edges, opposite original edges and self-loops.
-        const auto forward = arcs.size();
-        arcs.push_back({u, v, capacity});
-        arcs.push_back({v, u, 0});
-        outgoing[u].push_back(forward);
-        outgoing[v].push_back(forward + 1);
-    }
-
-    const auto none = std::numeric_limits<std::size_t>::max();
-    std::vector<std::size_t> parent(n, none);
-    auto bfs = [&]() {
-        std::fill(parent.begin(), parent.end(), none);
-        std::vector<bool> reached(n, false);
-        std::queue<std::size_t> queue;
-        reached[s] = true;
-        queue.push(s);
-        while (!queue.empty()) {
-            const auto u = queue.front();
-            queue.pop();
-            for (const auto id : outgoing[u]) {
-                const auto& arc = arcs[id];
-                if (arc.capacity > 0 && !reached[arc.to]) {
-                    reached[arc.to] = true;
-                    parent[arc.to] = id;
-                    queue.push(arc.to);
-                }
+    while (!pending.empty()) {
+        size_t current = pending.front();
+        pending.pop();
+        for (size_t edgeId : outgoing[current]) {
+            const ResidualArc& edge = arcs[edgeId];
+            if (edge.capacity > 0 && !reached[edge.to]) {
+                reached[edge.to] = true;
+                parent[edge.to] = edgeId;
+                pending.push(edge.to);
             }
         }
-        return reached;
-    };
+    }
+    return reached;
+}
+} // namespace
 
-    auto reachable = bfs();
-    while (reachable[t]) {
-        auto amount = std::numeric_limits<std::int64_t>::max();
-        for (auto v = t; v != s; v = arcs[parent[v]].from) {
-            amount = std::min(amount, arcs[parent[v]].capacity);
-        }
-        result.maxFlow = checkedAdd(result.maxFlow, amount);
-        for (auto v = t; v != s; v = arcs[parent[v]].from) {
-            const auto id = parent[v];
-            arcs[id].capacity -= amount;
-            arcs[id ^ 1].capacity = checkedAdd(arcs[id ^ 1].capacity, amount);
-        }
-        reachable = bfs();
+MinCutResult minimumSTCut(const Graph& graph, int source, int target) {
+    if (graph.getNode(source) == nullptr) {
+        throw invalid_argument("MinCut: source ID khong ton tai: " + to_string(source));
+    }
+    if (graph.getNode(target) == nullptr) {
+        throw invalid_argument("MinCut: target ID khong ton tai: " + to_string(target));
+    }
+    if (source == target) {
+        throw invalid_argument("MinCut: source phai khac target");
     }
 
-    // Include ALL active original S->T edges, even capacity-zero edges:
-    // zero residual capacity does not mean the attack edge is blocked.
-    for (const auto& edge : graph.getEdges()) {
+    MinCutResult result;
+    vector<int> originalReachable = graph.dfs(source);
+    if (find(originalReachable.begin(), originalReachable.end(), target) ==
+        originalReachable.end()) {
+        return result; // Da mat ket noi thi khong can Patch.
+    }
+
+    // Node ID co the roi rac; index la vi tri trong mang.
+    unordered_map<int, size_t> index;
+    for (const Node& node : graph.getNodes()) {
+        size_t next = index.size();
+        index.emplace(node.getID(), next);
+    }
+    size_t nodeCount = index.size();
+    size_t sourceIndex = index.at(source);
+    size_t targetIndex = index.at(target);
+    vector<ResidualArc> arcs;
+    vector<vector<size_t>> outgoing(nodeCount);
+
+    for (const Edge& edge : graph.getEdges()) {
+        if (edge.isBlocked()) {
+            continue;
+        }
+        int64_t capacity = edge.getCapacity();
+        if (capacity < 0) {
+            throw invalid_argument("MinCut: capacity phai >= 0");
+        }
+        size_t from = index.at(edge.getFrom());
+        size_t to = index.at(edge.getTo());
+
+        // Moi canh goc co hai cung lien tiep: cung thuan truoc, cung nguoc sau.
+        size_t forward = arcs.size();
+        arcs.push_back({from, to, capacity});
+        arcs.push_back({to, from, 0});
+        outgoing[from].push_back(forward);
+        outgoing[to].push_back(forward + 1);
+    }
+
+    vector<size_t> parent(nodeCount, numeric_limits<size_t>::max());
+    vector<bool> reachable = bfsResidual(arcs, outgoing, sourceIndex, parent);
+    while (reachable[targetIndex]) {
+        int64_t amount = numeric_limits<int64_t>::max();
+        for (size_t node = targetIndex; node != sourceIndex; node = arcs[parent[node]].from) {
+            amount = min(amount, arcs[parent[node]].capacity);
+        }
+        result.maxFlow = checkedAdd(result.maxFlow, amount);
+
+        for (size_t node = targetIndex; node != sourceIndex; node = arcs[parent[node]].from) {
+            size_t edgeId = parent[node];
+            size_t reverseId;
+            if (edgeId % 2 == 0) {
+                reverseId = edgeId + 1;
+            } else {
+                reverseId = edgeId - 1;
+            }
+            arcs[edgeId].capacity -= amount;
+            arcs[reverseId].capacity = checkedAdd(arcs[reverseId].capacity, amount);
+        }
+        reachable = bfsResidual(arcs, outgoing, sourceIndex, parent);
+    }
+
+    // Lay canh goc di tu phan con reachable sang phan khong reachable.
+    // Canh capacity = 0 van can block vi hacker di theo Weight.
+    for (const Edge& edge : graph.getEdges()) {
         if (!edge.isBlocked() && reachable[index.at(edge.getFrom())] &&
             !reachable[index.at(edge.getTo())]) {
             result.edgeIds.push_back(edge.getID());
@@ -113,25 +130,27 @@ MinCutResult minimumSTCut(const Graph& graph, int source, int target) {
         }
     }
     if (result.maxFlow != result.minCutCapacity) {
-        throw std::logic_error("MinCut: max-flow khac min-cut capacity");
+        throw logic_error("MinCut: max-flow khac min-cut capacity");
     }
 
-    // Verify topological disconnection without changing or patching Graph.
-    const std::unordered_set<int> cut(result.edgeIds.begin(), result.edgeIds.end());
-    std::unordered_set<int> visited{source};
-    std::queue<int> queue;
-    queue.push(source);
-    while (!queue.empty()) {
-        const int u = queue.front();
-        queue.pop();
-        for (const auto* edge : graph.getOutGoingEdge(u)) {
-            if (!cut.count(edge->getID()) && visited.insert(edge->getTo()).second) {
-                queue.push(edge->getTo());
+    // Thu bo tap cut khi duyet BFS, khong sua graph goc.
+    unordered_set<int> cut(result.edgeIds.begin(), result.edgeIds.end());
+    unordered_set<int> visited{source};
+    queue<int> pending;
+    pending.push(source);
+    while (!pending.empty()) {
+        int current = pending.front();
+        pending.pop();
+        for (const Edge* edge : graph.getOutGoingEdge(current)) {
+            int next = edge->getTo();
+            if (cut.count(edge->getID()) == 0 && visited.count(next) == 0) {
+                visited.insert(next);
+                pending.push(next);
             }
         }
     }
-    if (visited.count(target)) {
-        throw std::logic_error("MinCut: tap canh khong ngat duoc S-T");
+    if (visited.count(target) != 0) {
+        throw logic_error("MinCut: tap canh khong ngat duoc S-T");
     }
     return result;
 }

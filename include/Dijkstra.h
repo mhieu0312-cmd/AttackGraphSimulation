@@ -10,13 +10,9 @@
 
 using namespace std;
 
-
-// =========================
 // KET QUA DUONG DI
-// =========================
 
 struct PathResult {
-
     // Co duong den target hay khong
     bool reachable = false;
 
@@ -30,13 +26,9 @@ struct PathResult {
     vector<int> edgeIds;
 };
 
-
-// =========================
 // TRANG THAI TAN CONG
-// =========================
 
 enum class AttackStatus {
-
     // Hacker den duoc target
     SUCCESS,
 
@@ -47,13 +39,9 @@ enum class AttackStatus {
     NO_PATH
 };
 
-
-// =========================
 // KET QUA TAN CONG
-// =========================
 
 struct AttackResult {
-
     // Duong Dijkstra du kien, chua xet budget
     PathResult path;
 
@@ -69,72 +57,28 @@ struct AttackResult {
     optional<int64_t> remainingToken;
 };
 
-
-// =========================
 // DIJKSTRA
-// =========================
 
 // Tim duong co tong weight nho nhat
-PathResult dijkstra(
-    const Graph& graph,
-    int start,
-    int target
-);
+PathResult dijkstra(const Graph& graph, int start, int target);
 
-
-// =========================
 // HACKER SIMULATION
-// =========================
 
 // Dijkstra tim lo trinh; hacker chi di khi canh con mo va du token.
 // Neu NO_PATH sau Patch, thu lai lo trinh cu va dung tai canh khong di duoc.
-AttackResult hackerSimulation(
-    const Graph& graph,
-    int start,
-    int target,
-    int64_t budget,
-    const PathResult* previousRoute = nullptr
-);
+AttackResult hackerSimulation(const Graph& graph, int start, int target, int64_t budget,
+                              const PathResult* previousRoute = nullptr);
 
-
-// =========================
 // DIEU KIEN DI CHUYEN (CAN MOVE)
-// =========================
 
-// Kiem tra hacker co the di qua mot canh cu the voi so token hien co hay khong:
-// 1. Canh phai ton tai trong do thi
-// 2. Canh chua bi Defender chan (!isBlocked)
-// 3. So token con lai phai khong am va >= weight cua canh
-bool canMove(
-    const Graph& graph,
-    int edgeId,
-    int64_t remainingToken
-);
+// Canh phai ton tai, chua block va du token de di qua.
+bool canMove(const Graph& graph, int edgeId, int64_t remainingToken);
 
-
-// =========================
 // IN KET QUA
-// =========================
 
-void printPath(
-    const PathResult& path,
-    ostream& out
-);
-
-void printAttack(
-    const AttackResult& attack,
-    ostream& out
-);
+void printPath(const PathResult& path, ostream& out);
+void printAttack(const AttackResult& attack, ostream& out);
 
 // In ket qua truc quan gom ten Node va Relation giup bao cao va giai thich
-void printPathDetailed(
-    const Graph& graph,
-    const PathResult& path,
-    ostream& out
-);
-
-void printAttackDetailed(
-    const Graph& graph,
-    const AttackResult& attack,
-    ostream& out
-);
+void printPathDetailed(const Graph& graph, const PathResult& path, ostream& out);
+void printAttackDetailed(const Graph& graph, const AttackResult& attack, ostream& out);

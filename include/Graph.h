@@ -3,14 +3,10 @@
 #include "Node.h"
 #include "Edge.h"
 
-#include <cstdint>
-#include <map>
 #include <string>
-#include <unordered_map>
 #include <vector>
 
 using namespace std;
-
 
 struct GraphStatistics {
     int nodes = 0;
@@ -29,18 +25,13 @@ class Graph {
     // Kiem tra node co ton tai
     void requireNode(int id) const;
 
-
-public:
-
+  public:
     void addNode(Node node);
-
     void addEdge(Edge edge);
 
     // TIM NODE / EDGE
     const Node* getNode(int id) const;
-
     const Edge* getEdge(int id) const;
-
 
     // Lay danh sach node
     const vector<Node>& getNodes() const {
@@ -71,9 +62,7 @@ public:
     void unblockEdge(int edgeId);
 
     // Kiem tra tat ca ID truoc khi block nhieu edge
-    void blockEdges(
-        const vector<int>& edgeIds
-    );
+    void blockEdges(const vector<int>& edgeIds);
 
     // THONG KE
     GraphStatistics statistics() const;
