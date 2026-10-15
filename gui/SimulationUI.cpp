@@ -585,6 +585,17 @@ void SimulationUI::frame() {
     textbox({width - 216, 110, 196, 34}, budgetText, 2, !modal);
     DrawRectangleRounded(view.getBounds(), 0.01f, 6, panel);
     view.draw(font, showLabels, dimEdges, selectedNode);
+
+    // Ve theo toa do man hinh de o ten khong di theo camera.
+    Rectangle graphArea = view.getBounds();
+    Rectangle teamBox{graphArea.x + 12, graphArea.y + 12, 240, 120};
+    DrawRectangleRounded(teamBox, 0.08f, 6, background);
+    DrawRectangleLinesEx(teamBox, 1, {63, 80, 105, 255});
+    text("NHÓM THỰC HIỆN", teamBox.x + 12, teamBox.y + 12, 16, accent);
+    text("Hoàng Minh Hiếu", teamBox.x + 12, teamBox.y + 38, 18);
+    text("Nguyễn Đức Hoàng", teamBox.x + 12, teamBox.y + 63, 18);
+    text("Nguyễn Tuấn Anh", teamBox.x + 12, teamBox.y + 88, 18);
+
     float toolbar = height - 296;
     if (button({20, toolbar, 128, 30}, showBefore ? "View: Before" : "View: Current",
                !modal && hasBefore)) {
