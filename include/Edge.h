@@ -3,24 +3,21 @@
 using namespace std;
 
 class Edge {
-    // Node bat dau, ket thuc
+
     int from;
     int to;
 
-    // trong so cho hacker
+    // chi phi tan cong
     int weight;
 
-    // Loai quan he
     string relation;
 
-    // Edge da bi Defender chan hay chua
     bool blocked;
     int id;
 
-    // Gia tri dung cho Min-Cut
+    // chi phi chan canh
     int capacity;
 
-    // Cho phep Graph truy cap truc tiep
     friend class Graph;
 
   public:
@@ -33,6 +30,5 @@ class Edge {
     bool isBlocked() const;
     int getCapacity() const;
 
-    // Thay doi trang thai blocked
     void setBlocked(bool value);
 };

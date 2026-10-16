@@ -24,8 +24,6 @@ int Node::getAssets() const {
     return assets;
 }
 
-// NODE TYPE -> STRING
-
 string nodeTypeToString(NodeType type) {
     switch (type) {
     case NodeType::ENTRY:
@@ -46,8 +44,6 @@ string nodeTypeToString(NodeType type) {
 
     throw invalid_argument("NodeType khong hop le");
 }
-
-// STRING -> NODE TYPE
 
 NodeType nodeTypeFromString(const string& text) {
     for (NodeType type : {NodeType::ENTRY, NodeType::ENDPOINT, NodeType::IDENTITY,

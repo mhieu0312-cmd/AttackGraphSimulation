@@ -12,7 +12,7 @@
 using namespace std;
 
 namespace {
-// Tham so cho mot lan mo phong.
+
 struct SimulationParameters {
     int source;
     int target;
@@ -149,7 +149,6 @@ SimulationParameters demoParameters(const Graph& graph) {
     return {firstNodeOfType(graph, NodeType::ENTRY), firstNodeOfType(graph, NodeType::TARGET), 0};
 }
 
-// Huong dan cach chay
 void usage() {
     cout << "Usage:\n"
          << "  AttackGraph\n"
@@ -160,11 +159,10 @@ void usage() {
             "--patch <edgeId...>\n";
 }
 
-} // namespace
+}
 
 int main(int argc, char* argv[]) {
     try {
-        // CAU HINH MAC DINH
 
         string filename;
         SimulationParameters parameters{0, 0, 0};
@@ -205,8 +203,6 @@ int main(int argc, char* argv[]) {
             }
         }
 
-        // LOAD DATASET
-
         filename = resolveDatasetPath(filename, argv[0], PROJECT_ROOT).string();
         cout << "File: " << filename << '\n';
         Graph graph = loadDataset(filename);
@@ -230,16 +226,10 @@ int main(int argc, char* argv[]) {
         cout << "Target: " << target << '\n';
         cout << "Budget: " << budget << '\n';
 
-        // CHAY MO PHONG
-
         SimulationResult result = runSimulation(graph, source, target, budget, manual);
-
-        // TRUOC KHI PATCH
 
         cout << "\n=== BEFORE PATCH ===\n";
         printAttack(result.before, cout);
-
-        // PHONG THU
 
         cout << "\n=== DEFENSE ===\n";
         cout << result.defenseMessage << '\n';
@@ -264,12 +254,8 @@ int main(int argc, char* argv[]) {
         cout << '\n';
         cout << "Newly blocked edges: " << result.newlyBlockedEdges << '\n';
 
-        // SAU KHI PATCH
-
         cout << "\n=== AFTER PATCH ===\n";
         printAttack(result.after, cout);
-
-        // KET QUA
 
         cout << "\n=== RESULT ===\n";
         cout << "Reachable: " << result.reachableBefore << " -> " << result.reachableAfter << '\n';
@@ -278,8 +264,6 @@ int main(int argc, char* argv[]) {
              << '\n';
         return 0;
     }
-
-    // BAT LOI
 
     catch (const exception& e) {
         cerr << "ERROR: " << e.what() << '\n';

@@ -16,57 +16,44 @@ struct GraphStatistics {
 };
 
 class Graph {
-    // Danh sach node
+
     vector<Node> Nodes;
 
-    // Danh sach edge
     vector<Edge> Edges;
 
-    // Kiem tra node co ton tai
     void requireNode(int id) const;
 
   public:
     void addNode(Node node);
     void addEdge(Edge edge);
 
-    // TIM NODE / EDGE
     const Node* getNode(int id) const;
     const Edge* getEdge(int id) const;
 
-    // Lay danh sach node
     const vector<Node>& getNodes() const {
         return Nodes;
     }
 
-    // Lay danh sach edge
     const vector<Edge>& getEdges() const {
         return Edges;
     }
 
-    // Lay cac node co the di den
     vector<int> getNeighbor(int id) const;
 
-    // Lay cac edge di ra va chua bi block
+    // chi lay canh di ra chua bi chan
     vector<const Edge*> getOutGoingEdge(int id) const;
 
-    // DFS theo thu tu them canh; chi duyet canh chua block, khong doi graph.
     vector<int> dfs(int start) const;
 
-    // Kiem tra edge da bi block chua
     bool isBlocked(int edgeId) const;
 
-    // Block mot edge
     void blockEdge(int edgeId);
 
-    // Mo lai mot edge
     void unblockEdge(int edgeId);
 
-    // Kiem tra tat ca ID truoc khi block nhieu edge
     void blockEdges(const vector<int>& edgeIds);
 
-    // THONG KE
     GraphStatistics statistics() const;
 
-    // KIEM TRA DATASET
     vector<string> validationWarnings() const;
 };

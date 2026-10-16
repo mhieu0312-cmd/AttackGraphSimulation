@@ -55,7 +55,7 @@ void centered(Font font, const string& text, Vector2 point, float size, Color co
     Vector2 extent = MeasureTextEx(font, text.c_str(), size, 1);
     DrawTextEx(font, text.c_str(), {point.x - extent.x / 2, point.y}, size, 1, color);
 }
-} // namespace
+}
 
 void GraphView::setGraph(const Graph& graph) {
     nodes.clear();

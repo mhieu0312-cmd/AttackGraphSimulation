@@ -6,15 +6,11 @@
 
 using namespace std;
 
-// KIEM TRA NODE
-
 void Graph::requireNode(int id) const {
     if (getNode(id) == nullptr) {
         throw invalid_argument("Khong co node ID " + to_string(id));
     }
 }
-
-// TIM NODE / EDGE
 
 const Node* Graph::getNode(int id) const {
     for (const Node& node : Nodes) {
@@ -35,8 +31,6 @@ const Edge* Graph::getEdge(int id) const {
 
     return nullptr;
 }
-
-// THEM NODE
 
 void Graph::addNode(Node node) {
     if (node.getID() < 0 || getNode(node.getID()) != nullptr) {
@@ -59,12 +53,9 @@ void Graph::addNode(Node node) {
         throw invalid_argument("Assets phai >= 0");
     }
 
-    // Kiem tra NodeType truoc khi them node.
     nodeTypeToString(node.getType());
     Nodes.push_back(node);
 }
-
-// THEM EDGE
 
 void Graph::addEdge(Edge edge) {
     requireNode(edge.getFrom());
@@ -91,8 +82,6 @@ void Graph::addEdge(Edge edge) {
     Edges.push_back(edge);
 }
 
-// TIM CAC EDGE DI RA
-
 vector<const Edge*> Graph::getOutGoingEdge(int id) const {
     requireNode(id);
     vector<const Edge*> result;
@@ -106,8 +95,6 @@ vector<const Edge*> Graph::getOutGoingEdge(int id) const {
     return result;
 }
 
-// TIM NODE KE
-
 vector<int> Graph::getNeighbor(int id) const {
     requireNode(id);
     vector<int> result;
@@ -120,8 +107,6 @@ vector<int> Graph::getNeighbor(int id) const {
 
     return result;
 }
-
-// BLOCK / UNBLOCK EDGE
 
 bool Graph::isBlocked(int edgeId) const {
     const Edge* edge = getEdge(edgeId);
@@ -167,8 +152,6 @@ void Graph::blockEdges(const vector<int>& edgeIds) {
     }
 }
 
-// THONG KE GRAPH
-
 GraphStatistics Graph::statistics() const {
     GraphStatistics result;
     result.nodes = Nodes.size();
@@ -184,8 +167,6 @@ GraphStatistics Graph::statistics() const {
 
     return result;
 }
-
-// KIEM TRA DATASET
 
 vector<string> Graph::validationWarnings() const {
     vector<string> result;
@@ -216,7 +197,7 @@ vector<string> Graph::validationWarnings() const {
         result.push_back("Khong co node TARGET");
     }
 
-    // Node co lap: khong co canh noi, ke ca canh da block.
+    // tinh ca canh da chan khi xet node co lap
     unordered_set<int> incident;
     for (const Edge& edge : Edges) {
         incident.insert(edge.getFrom());
@@ -256,7 +237,7 @@ vector<int> Graph::dfs(int start) const {
         visited.insert(current);
         order.push_back(current);
         vector<const Edge*> edges = getOutGoingEdge(current);
-        // Dua vao stack theo thu tu nguoc de DFS duyet dung thu tu them canh.
+        // day nguoc de giu thu tu duyet
         for (size_t i = edges.size(); i > 0; --i) {
             int next = edges[i - 1]->getTo();
             if (visited.count(next) == 0) {

@@ -6,8 +6,6 @@
 
 using namespace std;
 
-// KIEM TRA DUONG DI
-
 bool Defender::isReachable(int source, int target) const {
     if (graph.getNode(source) == nullptr || graph.getNode(target) == nullptr) {
         throw invalid_argument("Connectivity: source/target khong ton tai");
@@ -39,16 +37,14 @@ bool Defender::isReachable(int source, int target) const {
     return false;
 }
 
-// GOI Y EDGE CAN BLOCK
-
 int Defender::suggestCutEdge(int source, int target) const {
-    // Khong co duong di thi khong can block
+
     if (!isReachable(source, target) || source == target) {
         return -1;
     }
 
-    // Tao ban sao de thu block
-    // Khong lam thay doi graph chinh
+    // thu tren ban sao cua graph
+
     Graph trial = graph;
     Defender probe(trial);
 
@@ -66,11 +62,8 @@ int Defender::suggestCutEdge(int source, int target) const {
         }
     }
 
-    // Khong co mot edge don le nao cat duoc graph
     return -1;
 }
-
-// BLOCK EDGE
 
 void Defender::blockEdge(int edgeId) {
     graph.blockEdge(edgeId);

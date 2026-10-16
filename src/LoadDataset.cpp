@@ -8,8 +8,8 @@
 using namespace std;
 
 namespace {
-// Object dung keys va values; array chi dung values.
-// Kieu: o = object, a = array, s = string, i = number, b = boolean, n = null.
+// object dung keys va values, array chi dung values
+// kieu: o object, a array, s string, i number, b bool, n null
 struct JsonValue {
     char type = 'n';
     string text;
@@ -136,7 +136,7 @@ class JsonReader {
             } else if (character < 128) {
                 result += char(character);
             } else {
-                // Kiem tra chuoi UTF-8, giu nguyen ten tieng Viet.
+                // kiem tra utf-8 cho ten tieng viet
                 int count = 0, code = 0, minimum = 0;
                 if (character >= 0xC2 && character <= 0xDF) {
                     count = 1; code = character & 0x1F; minimum = 0x80;
@@ -339,7 +339,7 @@ int integerField(const JsonValue& object, const char* key) {
     }
     return value;
 }
-} // namespace
+}
 
 Graph loadDataset(istream& input) {
     Graph graph;

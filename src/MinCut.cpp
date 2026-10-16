@@ -23,7 +23,6 @@ int64_t checkedAdd(int64_t a, int64_t b) {
     return a + b;
 }
 
-// BFS tren mang du, luu canh di den moi node de truy nguoc duong tang luong.
 vector<bool> bfsResidual(const vector<ResidualArc>& arcs, const vector<vector<size_t>>& outgoing,
                          size_t source, vector<size_t>& parent) {
     fill(parent.begin(), parent.end(), numeric_limits<size_t>::max());
@@ -46,7 +45,7 @@ vector<bool> bfsResidual(const vector<ResidualArc>& arcs, const vector<vector<si
     }
     return reached;
 }
-} // namespace
+}
 
 MinCutResult minimumSTCut(const Graph& graph, int source, int target) {
     if (graph.getNode(source) == nullptr) {
@@ -63,10 +62,10 @@ MinCutResult minimumSTCut(const Graph& graph, int source, int target) {
     vector<int> originalReachable = graph.dfs(source);
     if (find(originalReachable.begin(), originalReachable.end(), target) ==
         originalReachable.end()) {
-        return result; // Da mat ket noi thi khong can Patch.
+        return result;
     }
 
-    // Node ID co the roi rac; index la vi tri trong mang.
+    // id khong phai vi tri trong mang
     unordered_map<int, size_t> index;
     for (const Node& node : graph.getNodes()) {
         size_t next = index.size();
@@ -89,7 +88,7 @@ MinCutResult minimumSTCut(const Graph& graph, int source, int target) {
         size_t from = index.at(edge.getFrom());
         size_t to = index.at(edge.getTo());
 
-        // Moi canh goc co hai cung lien tiep: cung thuan truoc, cung nguoc sau.
+        // cap cung thuan va nguoc nam lien nhau
         size_t forward = arcs.size();
         arcs.push_back({from, to, capacity});
         arcs.push_back({to, from, 0});
@@ -120,8 +119,7 @@ MinCutResult minimumSTCut(const Graph& graph, int source, int target) {
         reachable = bfsResidual(arcs, outgoing, sourceIndex, parent);
     }
 
-    // Lay canh goc di tu phan con reachable sang phan khong reachable.
-    // Canh capacity = 0 van can block vi hacker di theo Weight.
+    // capacity bang 0 van can chan
     for (const Edge& edge : graph.getEdges()) {
         if (!edge.isBlocked() && reachable[index.at(edge.getFrom())] &&
             !reachable[index.at(edge.getTo())]) {
@@ -133,7 +131,7 @@ MinCutResult minimumSTCut(const Graph& graph, int source, int target) {
         throw logic_error("MinCut: max-flow khac min-cut capacity");
     }
 
-    // Thu bo tap cut khi duyet BFS, khong sua graph goc.
+    // thu cat ket noi, khong sua graph goc
     unordered_set<int> cut(result.edgeIds.begin(), result.edgeIds.end());
     unordered_set<int> visited{source};
     queue<int> pending;

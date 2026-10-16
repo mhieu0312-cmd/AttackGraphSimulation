@@ -8,8 +8,6 @@
 
 using namespace std;
 
-// TIM NODE CO DISTANCE NHO NHAT
-
 namespace {
 size_t minDistance(const vector<int64_t>& distance, const vector<bool>& visited) {
     size_t index = distance.size();
@@ -25,9 +23,7 @@ size_t minDistance(const vector<int64_t>& distance, const vector<bool>& visited)
     return index;
 }
 
-} // namespace
-
-// DIJKSTRA
+}
 
 PathResult dijkstra(const Graph& graph, int start, int target) {
     if (graph.getNode(start) == nullptr || graph.getNode(target) == nullptr) {
@@ -38,7 +34,7 @@ PathResult dijkstra(const Graph& graph, int start, int target) {
     size_t n = nodes.size();
     int64_t inf = numeric_limits<int64_t>::max();
 
-    // Map Node ID sang vi tri trong vector
+    // doi id sang vi tri trong vector
     unordered_map<int, size_t> index;
 
     for (size_t i = 0; i < n; ++i) {
@@ -53,7 +49,6 @@ PathResult dijkstra(const Graph& graph, int start, int target) {
     for (size_t count = 0; count < n; ++count) {
         size_t u = minDistance(distance, visited);
 
-        // Khong con node nao di duoc
         if (u == n) {
             break;
         }
@@ -71,14 +66,13 @@ PathResult dijkstra(const Graph& graph, int start, int target) {
                 continue;
             }
 
-            // Kiem tra tran so
+            // kiem tra tran so
             if (distance[u] > inf - edge->getWeight()) {
                 throw overflow_error("Dijkstra cost overflow");
             }
 
             int64_t newCost = distance[u] + edge->getWeight();
 
-            // Tim duoc duong re hon
             if (newCost < distance[v]) {
                 distance[v] = newCost;
                 parentEdge[v] = edge->getID();
@@ -86,7 +80,6 @@ PathResult dijkstra(const Graph& graph, int start, int target) {
         }
     }
 
-    // Khong co duong den target
     if (distance[index.at(target)] == inf) {
         return {};
     }
@@ -95,7 +88,7 @@ PathResult dijkstra(const Graph& graph, int start, int target) {
     result.reachable = true;
     result.totalCost = distance[index.at(target)];
 
-    // Truy nguoc duong di
+    // truy nguoc duong di
     int current = target;
     result.nodes.push_back(current);
 
@@ -112,13 +105,10 @@ PathResult dijkstra(const Graph& graph, int start, int target) {
         result.nodes.push_back(current);
     }
 
-    // Dao lai thanh start -> target
     reverse(result.nodes.begin(), result.nodes.end());
     reverse(result.edgeIds.begin(), result.edgeIds.end());
     return result;
 }
-
-// MO PHONG HACKER
 
 AttackResult hackerSimulation(const Graph& graph, int start, int target, int64_t budget,
                               const PathResult* previousRoute) {
@@ -177,8 +167,6 @@ AttackResult hackerSimulation(const Graph& graph, int start, int target, int64_t
     return result;
 }
 
-// DIEU KIEN DI CHUYEN (CAN MOVE)
-
 bool canMove(const Graph& graph, int edgeId, int64_t remainingToken) {
     if (remainingToken < 0) {
         return false;
@@ -186,16 +174,12 @@ bool canMove(const Graph& graph, int edgeId, int64_t remainingToken) {
 
     const Edge* edge = graph.getEdge(edgeId);
 
-    // Canh khong ton tai hoac da bi Defender chan
     if (edge == nullptr || edge->isBlocked()) {
         return false;
     }
 
-    // Token con lai phai du chi tra weight cua canh
     return remainingToken >= edge->getWeight();
 }
-
-// IN DUONG DI
 
 void printPath(const PathResult& path, ostream& out) {
     for (size_t i = 0; i < path.nodes.size(); ++i) {
@@ -206,8 +190,6 @@ void printPath(const PathResult& path, ostream& out) {
         out << path.nodes[i];
     }
 }
-
-// IN KET QUA ATTACK
 
 void printAttack(const AttackResult& attack, ostream& out) {
     out << "Budget khoi tao: " << attack.initialBudget << '\n';
@@ -239,8 +221,6 @@ void printAttack(const AttackResult& attack, ostream& out) {
     }
     out << '\n';
 }
-
-// IN CHI TIET (TRUC QUAN KEM TEN NODE)
 
 void printPathDetailed(const Graph& graph, const PathResult& path, ostream& out) {
     if (path.nodes.empty()) {

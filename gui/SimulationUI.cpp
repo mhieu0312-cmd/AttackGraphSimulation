@@ -52,7 +52,7 @@ void eraseLastCharacter(string& value) {
     }
     value.erase(index);
 }
-} // namespace
+}
 
 SimulationUI::SimulationUI(Font selectedFont) : font(selectedFont) {}
 
@@ -586,7 +586,7 @@ void SimulationUI::frame() {
     DrawRectangleRounded(view.getBounds(), 0.01f, 6, panel);
     view.draw(font, showLabels, dimEdges, selectedNode);
 
-    // Ve theo toa do man hinh de o ten khong di theo camera.
+    // o ten co dinh tren man hinh
     Rectangle graphArea = view.getBounds();
     Rectangle teamBox{graphArea.x + 12, graphArea.y + 12, 240, 120};
     DrawRectangleRounded(teamBox, 0.08f, 6, background);
@@ -639,7 +639,7 @@ void SimulationUI::frame() {
                !modal && !graph.getNodes().empty())) {
         reset();
     }
-    // Di chuot len thong bao de doc noi dung day du.
+
     clippedText(message, {20, height - 74, width - 40, 24}, muted);
     if (!modal && CheckCollisionPointRec(GetMousePosition(), {20, height - 74, width - 40, 24})) {
         DrawRectangle(20, static_cast<int>(height - 168), static_cast<int>(width - 40), 90, panel);

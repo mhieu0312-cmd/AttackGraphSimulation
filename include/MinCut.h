@@ -12,6 +12,6 @@ struct MinCutResult {
     vector<int> edgeIds;
 };
 
-// Edmonds-Karp dung Capacity, tra ve ID canh goc can Patch.
-// Khong thay doi graph; kiem tra tap cut co ngat S-T hay khong.
+// tim cut theo capacity, tra id canh goc
+
 MinCutResult minimumSTCut(const Graph& graph, int source, int target);
